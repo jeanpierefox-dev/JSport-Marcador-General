@@ -1,0 +1,8 @@
+{
+  "name": "VoleyPro Manager & Broadcast",
+  "description": "A comprehensive Volleyball Championship management system with professional VNL-style broadcasting overlays, team management, automatic fixture generation, and live scoring statistics.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

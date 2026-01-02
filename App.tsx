@@ -31,11 +31,14 @@ const LoginScreen = ({ users, onLogin }: { users: User[], onLogin: (user: User) 
   };
 
   return (
-    <div className="flex h-screen items-center justify-center bg-slate-900 bg-[url('https://images.unsplash.com/photo-1592656094267-764a45160876?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center">
-      <div className="absolute inset-0 bg-blue-950/80 backdrop-blur-sm"></div>
+    <div className="flex h-screen items-center justify-center bg-[#020617] relative overflow-hidden">
+      {/* Background Gradients */}
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-[#020617] to-[#020617]"></div>
+      <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-blue-600/10 rounded-full blur-[100px]"></div>
+      <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-indigo-600/10 rounded-full blur-[100px]"></div>
       
       <div className="relative z-10 w-full max-w-md p-8">
-        <div className="bg-slate-900/90 border border-blue-500/30 rounded-2xl shadow-2xl p-8 backdrop-blur-xl">
+        <div className="bg-slate-900/80 border border-white/10 rounded-2xl shadow-2xl p-8 backdrop-blur-xl ring-1 ring-white/5">
           <div className="flex flex-col items-center mb-10">
              {/* JSport Corporate Logo */}
              <div className="flex items-center gap-3 mb-2 transform hover:scale-105 transition duration-500">
@@ -59,7 +62,7 @@ const LoginScreen = ({ users, onLogin }: { users: User[], onLogin: (user: User) 
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-600 rounded-lg leading-5 bg-slate-800 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 sm:text-sm"
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-700 rounded-lg leading-5 bg-slate-950/50 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 sm:text-sm"
                   placeholder="Ingrese su usuario"
                   required
                 />
@@ -76,7 +79,7 @@ const LoginScreen = ({ users, onLogin }: { users: User[], onLogin: (user: User) 
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-600 rounded-lg leading-5 bg-slate-800 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 sm:text-sm"
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-700 rounded-lg leading-5 bg-slate-950/50 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 sm:text-sm"
                   placeholder="••••••••"
                   required
                 />
@@ -107,8 +110,8 @@ const LoginScreen = ({ users, onLogin }: { users: User[], onLogin: (user: User) 
 };
 
 const PageContainer = ({ title, icon: Icon, onBack, children }: any) => (
-    <div className="flex flex-col h-full bg-slate-900 w-full">
-        <header className="bg-slate-950 border-b border-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-md">
+    <div className="flex flex-col h-full w-full bg-transparent">
+        <header className="bg-slate-950/80 border-b border-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-md backdrop-blur-md">
             <div className="flex items-center gap-4">
                 <button 
                     onClick={onBack} 
@@ -582,7 +585,7 @@ const App = () => {
     ].filter(item => item.id !== 'users' || currentUser.role === UserRole.ADMIN);
 
     return (
-    <div className="flex flex-col items-center justify-center h-full bg-slate-900 text-white p-4 overflow-y-auto">
+    <div className="flex flex-col items-center justify-center h-full text-white p-4 overflow-y-auto">
         <div className="mb-12 flex flex-col items-center animate-fade-in-up">
             <div className="relative mb-6 group cursor-default">
                 <div className="absolute inset-0 bg-blue-600 blur-[60px] opacity-20 rounded-full group-hover:opacity-30 transition duration-500"></div>
@@ -606,10 +609,10 @@ const App = () => {
                 <button 
                     key={item.id}
                     onClick={() => setActiveTab(item.id as any)}
-                    className="group relative overflow-hidden rounded-2xl p-6 md:p-8 bg-slate-800 border border-slate-700 hover:border-slate-500 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 flex flex-col items-center gap-4"
+                    className="group relative overflow-hidden rounded-2xl p-6 md:p-8 bg-slate-800/80 border border-slate-700 hover:border-slate-500 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 flex flex-col items-center gap-4 backdrop-blur-sm"
                 >
                     <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${item.color}`}></div>
-                    <div className={`p-4 rounded-full bg-slate-900/50 text-white group-hover:scale-110 transition-transform duration-300 ${item.color.replace('bg-', 'text-')}`}>
+                    <div className={`p-4 rounded-full bg-slate-950 text-white group-hover:scale-110 transition-transform duration-300 ${item.color.replace('bg-', 'text-')}`}>
                         <item.icon size={32} />
                     </div>
                     <span className="font-bold text-lg md:text-xl text-slate-200 group-hover:text-white uppercase tracking-wider">{item.label}</span>
@@ -626,12 +629,12 @@ const App = () => {
 
   const renderTeams = () => {
     const content = selectedTeamId ? (
-        <div className="p-4 md:p-8 overflow-y-auto h-full pb-20 bg-slate-900">
+        <div className="p-4 md:p-8 overflow-y-auto h-full pb-20">
            <button onClick={() => { setSelectedTeamId(null); setEditingPlayer(null); setIsEditingTeam(false); }} className="mb-4 flex items-center gap-2 text-slate-400 hover:text-white transition">
               <ArrowLeft size={20} /> Volver a Lista
            </button>
            
-           <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-8 mb-8 bg-slate-800 p-4 md:p-8 rounded-xl border border-slate-700 shadow-xl relative">
+           <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-8 mb-8 bg-slate-800/50 p-4 md:p-8 rounded-xl border border-slate-700 shadow-xl relative backdrop-blur-sm">
                {currentUser.role === UserRole.ADMIN && !isEditingTeam && (
                    <button onClick={() => setIsEditingTeam(true)} className="absolute top-4 right-4 text-slate-500 hover:text-white">
                        <Edit size={20} />
@@ -683,7 +686,7 @@ const App = () => {
 
            {/* Add/Edit Player Form */}
            {currentUser.role === UserRole.ADMIN && !isEditingTeam && (
-               <div className="bg-slate-800 p-4 md:p-6 rounded-lg border border-slate-700 mb-8 transition-colors shadow-lg" style={editingPlayer ? {borderColor: '#eab308'} : {}}>
+               <div className="bg-slate-800/50 p-4 md:p-6 rounded-lg border border-slate-700 mb-8 transition-colors shadow-lg backdrop-blur-sm" style={editingPlayer ? {borderColor: '#eab308'} : {}}>
                   <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-white">
                       {editingPlayer ? <Edit size={18} className="text-yellow-500"/> : <UserPlus size={18} className="text-blue-500"/>} 
                       {editingPlayer ? `Editar: ${editingPlayer.name}` : 'Agregar Jugador'}
@@ -772,9 +775,9 @@ const App = () => {
            </div>
         </div>
     ) : (
-      <div className="p-4 md:p-8 overflow-y-auto h-full pb-20 bg-slate-900">
+      <div className="p-4 md:p-8 overflow-y-auto h-full pb-20">
         {currentUser.role === UserRole.ADMIN && (
-          <div className="bg-slate-800 p-6 rounded-lg border border-slate-700 mb-8 shadow-lg">
+          <div className="bg-slate-800/50 p-6 rounded-lg border border-slate-700 mb-8 shadow-lg backdrop-blur-sm">
               <h3 className="text-xl font-bold mb-4 text-white">Crear Nuevo Equipo</h3>
               <form onSubmit={(e: any) => { 
                 e.preventDefault(); 
@@ -829,9 +832,9 @@ const App = () => {
 
   const renderFixture = () => { 
     const content = (
-    <div className="p-4 md:p-8 overflow-y-auto h-full pb-20 bg-slate-900">
+    <div className="p-4 md:p-8 overflow-y-auto h-full pb-20">
       {currentUser.role === UserRole.ADMIN && (
-        <div className="bg-slate-800 p-6 rounded-lg border border-slate-700 mb-8 shadow-lg">
+        <div className="bg-slate-800/50 p-6 rounded-lg border border-slate-700 mb-8 shadow-lg backdrop-blur-sm">
             <h3 className="text-xl font-bold mb-4 text-white">Nuevo Campeonato</h3>
             <form onSubmit={(e: any) => { 
                 e.preventDefault(); 
@@ -855,7 +858,7 @@ const App = () => {
 
       <div className="space-y-8">
         {championships.map(champ => (
-          <div key={champ.id} className="bg-slate-800 rounded-lg p-4 md:p-6 border border-slate-700 shadow-xl relative overflow-hidden">
+          <div key={champ.id} className="bg-slate-800/80 rounded-lg p-4 md:p-6 border border-slate-700 shadow-xl relative overflow-hidden backdrop-blur-sm">
              {champ.logo && <img src={champ.logo} className="absolute top-0 right-0 w-24 h-24 md:w-48 md:h-48 object-contain opacity-10 pointer-events-none" />}
             
             <div className="flex items-center justify-between mb-6 relative z-10 border-b border-white/10 pb-4">
@@ -1009,10 +1012,10 @@ const App = () => {
 
   const renderUsers = () => (
      <PageContainer title="Gestión de Usuarios" icon={Users} onBack={() => setActiveTab('home')}>
-     <div className="p-4 md:p-8 overflow-y-auto h-full pb-20 bg-slate-900">
+     <div className="p-4 md:p-8 overflow-y-auto h-full pb-20">
       
       {currentUser.role === UserRole.ADMIN && (
-          <div className="bg-slate-800 p-6 rounded-lg border border-slate-700 mb-8 shadow-lg transition-colors" style={editingUser ? {borderColor: '#eab308'} : {}}>
+          <div className="bg-slate-800/50 p-6 rounded-lg border border-slate-700 mb-8 shadow-lg transition-colors backdrop-blur-sm" style={editingUser ? {borderColor: '#eab308'} : {}}>
               <h3 className="text-xl font-bold mb-4 text-white flex items-center gap-2">
                   {editingUser ? <Edit size={20} className="text-yellow-500"/> : <Plus size={20} className="text-blue-500"/>}
                   {editingUser ? `Editar Usuario: ${editingUser.name}` : 'Crear Nuevo Usuario'}
@@ -1099,8 +1102,8 @@ const App = () => {
 
   const renderStats = () => (
      <PageContainer title="Estadísticas Globales" icon={BarChart2} onBack={() => setActiveTab('home')}>
-     <div className="p-4 md:p-8 overflow-y-auto h-full pb-20 bg-slate-900">
-        <div className="bg-slate-800 p-4 md:p-6 rounded-lg border border-slate-700 shadow-lg mb-6">
+     <div className="p-4 md:p-8 overflow-y-auto h-full pb-20">
+        <div className="bg-slate-800/50 p-4 md:p-6 rounded-lg border border-slate-700 shadow-lg mb-6 backdrop-blur-sm">
             <h3 className="text-xl font-sports mb-4 text-yellow-500">Tabla de Posiciones</h3>
             <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -1153,7 +1156,7 @@ const App = () => {
   const renderLiveMatch = () => {
     if (!currentMatchId) return (
        <PageContainer title="Transmisión en Vivo" icon={Tv} onBack={() => setActiveTab('home')}>
-       <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-4 bg-slate-900 p-8 text-center">
+       <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-4 p-8 text-center">
           <div className="bg-slate-800 p-6 rounded-full border border-slate-700">
             <Calendar size={48} className="text-slate-500" />
           </div>
@@ -1258,7 +1261,7 @@ const App = () => {
     const isBroadcaster = currentUser.role === UserRole.ADMIN; // STRICTLY ADMIN ONLY
 
     return (
-      <div className="flex flex-col h-full bg-slate-900">
+      <div className="flex flex-col h-full w-full bg-slate-900/50 backdrop-blur-md">
         <header className="bg-black border-b border-slate-800 p-2 flex items-center justify-between">
              <button onClick={() => setActiveTab('home')} className="text-slate-400 hover:text-white flex items-center gap-2 text-sm"><ArrowLeft size={16}/> Salir</button>
              <div className="flex items-center gap-2">
@@ -1412,8 +1415,10 @@ const App = () => {
   };
   
   return (
-    <div className="flex h-screen w-screen bg-slate-900 text-white font-sans overflow-hidden">
-        <main className="flex-1 flex flex-col w-full h-full relative">
+    <div className="flex h-screen w-screen bg-[#0b0f19] text-white font-sans overflow-hidden">
+        {/* Subtle background glow */}
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,_#1e293b_0%,_transparent_70%)] pointer-events-none opacity-50"></div>
+        <main className="flex-1 flex flex-col w-full h-full relative z-10">
             {activeTab === 'home' && renderHome()}
             {activeTab === 'teams' && renderTeams()}
             {activeTab === 'fixture' && renderFixture()}

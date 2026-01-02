@@ -192,21 +192,39 @@ const App = () => {
   // Camera Access Effect
   useEffect(() => {
     let currentStream: MediaStream | null = null;
+    
     const startCamera = async () => {
         if (activeTab === 'live' && currentUser?.role === UserRole.ADMIN) {
             try {
-                // Request camera (prefer back camera for sports) and microphone
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment' }, 
-                    audio: true
-                });
-                currentStream = stream;
-                if (videoRef.current) {
-                    videoRef.current.srcObject = stream;
+                // Attempt 1: Back Camera (Environment)
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: 'environment' }, 
+                        audio: true
+                    });
+                    currentStream = stream;
+                } catch (err) {
+                    console.log("Environment camera failed or unavailable, falling back to default video input.");
+                    // Attempt 2: Default/User Camera (Fallback)
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: true, 
+                        audio: true
+                    });
+                    currentStream = stream;
+                }
+                
+                if (videoRef.current && currentStream) {
+                    videoRef.current.srcObject = currentStream;
+                    // Play is sometimes required on mobile devices if autoplay policies interfere
+                    try {
+                        await videoRef.current.play();
+                    } catch(e) {
+                        console.warn("Video auto-play failed", e);
+                    }
                 }
             } catch (err) {
                 console.error("Error accessing camera/microphone:", err);
-                alert("No se pudo acceder a la cámara o micrófono. Verifique los permisos.");
+                // We do not alert here to avoid spamming the user if permissions are denied permanently
             }
         }
     };

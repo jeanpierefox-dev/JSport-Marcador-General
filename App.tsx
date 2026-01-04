@@ -110,34 +110,38 @@ const LoginScreen = ({ users, onLogin }: { users: User[], onLogin: (user: User) 
 };
 
 const PageContainer = ({ title, icon: Icon, onBack, children }: any) => (
-    <div className="flex flex-col h-full w-full bg-transparent">
-        <header className="bg-slate-950/80 border-b border-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-md backdrop-blur-md">
+    <div className="flex flex-col h-full w-full bg-slate-900">
+        {/* Header - Fixed Height, Flex-none (Never shrinks or scrolls) */}
+        <header className="flex-none bg-slate-950 border-b border-slate-800 h-16 md:h-18 px-4 flex items-center justify-between z-50 shadow-md backdrop-blur-md relative">
             <div className="flex items-center gap-4">
                 <button 
                     onClick={onBack} 
-                    className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition flex items-center justify-center border border-slate-800 hover:border-slate-600"
+                    className="w-12 h-12 md:w-10 md:h-10 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition flex items-center justify-center border border-slate-800 hover:border-slate-600 active:scale-95 touch-manipulation"
                     title="Volver al Menú"
+                    aria-label="Volver"
                 >
-                    <ArrowLeft size={20} />
+                    <ArrowLeft size={24} />
                 </button>
                 <div className="h-8 w-[1px] bg-slate-800 mx-2 hidden md:block"></div>
-                <h2 className="text-lg md:text-2xl font-bold text-white flex items-center gap-3 uppercase tracking-wide">
-                    {Icon && <Icon className="text-yellow-500" size={24} />}
-                    {title}
+                <h2 className="text-lg md:text-2xl font-bold text-white flex items-center gap-3 uppercase tracking-wide truncate max-w-[200px] md:max-w-none">
+                    {Icon && <Icon className="text-yellow-500 shrink-0" size={24} />}
+                    <span className="truncate">{title}</span>
                 </h2>
             </div>
             
             {/* Small Header Logo */}
-            <div className="flex items-center gap-2 opacity-90">
+            <div className="flex items-center gap-2 opacity-90 shrink-0">
                 <div className="bg-blue-600 p-1.5 rounded skew-x-[-10deg] shadow shadow-blue-500/20">
                     <Trophy size={14} className="text-white" strokeWidth={3}/>
                 </div>
-                <span className="font-sports font-bold text-xl italic tracking-tighter text-white">
+                <span className="font-sports font-bold text-xl italic tracking-tighter text-white hidden md:inline">
                     J<span className="text-blue-500">Sport</span>
                 </span>
             </div>
         </header>
-        <div className="flex-1 overflow-hidden relative flex flex-col">
+        
+        {/* Content Area - Flex-1 (Takes remaining space), Scrolls independently */}
+        <div className="flex-1 overflow-hidden relative flex flex-col w-full min-h-0">
             {children}
         </div>
     </div>
@@ -177,9 +181,7 @@ const App = () => {
     showMiniScorebug: true,
     showServingInfo: false,
     showSetStats: false,
-    showLowerThird: false,
     showRotation: false,
-    showPlayerStats: false,
     showMatchIntro: false,
     showTimeout: false,
     showMicOverlay: true,
@@ -730,8 +732,11 @@ const App = () => {
   const renderTeams = () => {
     const content = selectedTeamId ? (
         <div className="p-4 md:p-8 overflow-y-auto h-full pb-20">
-           <button onClick={() => { setSelectedTeamId(null); setEditingPlayer(null); setIsEditingTeam(false); }} className="mb-4 flex items-center gap-2 text-slate-400 hover:text-white transition">
-              <ArrowLeft size={20} /> Volver a Lista
+           <button 
+                onClick={() => { setSelectedTeamId(null); setEditingPlayer(null); setIsEditingTeam(false); }} 
+                className="mb-6 flex items-center gap-3 text-slate-200 hover:text-white transition bg-slate-800 px-4 py-2 rounded-full border border-slate-700 active:scale-95 touch-manipulation w-fit"
+           >
+              <ArrowLeft size={20} /> <span className="font-bold">Volver a Lista</span>
            </button>
            
            <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-8 mb-8 bg-slate-800/50 p-4 md:p-8 rounded-xl border border-slate-700 shadow-xl relative backdrop-blur-sm">
@@ -1482,8 +1487,8 @@ const App = () => {
 
     return (
       <div className="flex flex-col h-full w-full bg-slate-900/50 backdrop-blur-md">
-        <header className="bg-black border-b border-slate-800 p-2 flex items-center justify-between">
-             <button onClick={() => setCurrentMatchId(null)} className="text-slate-400 hover:text-white flex items-center gap-2 text-sm"><ArrowLeft size={16}/> Salir de Transmisión</button>
+        <header className="bg-black border-b border-slate-800 p-2 flex items-center justify-between z-50">
+             <button onClick={() => setCurrentMatchId(null)} className="text-slate-400 hover:text-white flex items-center gap-2 text-sm bg-slate-800/50 px-3 py-2 rounded-full border border-slate-700 active:scale-95 touch-manipulation"><ArrowLeft size={20}/> Salir de Transmisión</button>
              <div className="flex items-center gap-4">
                  <div className="hidden md:flex items-center gap-2 text-xs text-slate-500 bg-slate-900 px-3 py-1 rounded-full border border-slate-800">
                      <Wifi size={12} className="text-green-500" />

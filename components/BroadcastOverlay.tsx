@@ -68,57 +68,57 @@ export const BroadcastOverlay: React.FC<Props> = ({ match, homeTeam, awayTeam, b
   const VNLScorebug = () => (
     <motion.div 
         initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-stretch h-14 md:h-16 font-sports shadow-[0_10px_40px_rgba(0,0,0,0.6)] z-30 w-full max-w-5xl justify-center"
+        className="absolute bottom-2 md:bottom-8 left-1/2 -translate-x-1/2 flex items-stretch h-12 md:h-16 font-sports shadow-[0_10px_40px_rgba(0,0,0,0.6)] z-30 w-[98%] md:w-full max-w-5xl justify-center origin-bottom transform scale-[0.9] md:scale-100"
     >
         {/* Left Team (Home) */}
-        <div className="flex bg-[#001f5b] text-white flex-1 justify-end items-center relative">
+        <div className="flex bg-[#001f5b] text-white flex-1 justify-end items-center relative rounded-l-lg md:rounded-none overflow-visible">
             {/* Team Logo Left */}
-            <div className="absolute left-[-30px] md:left-[-50px] top-1/2 -translate-y-1/2 z-20">
-                <img src={homeTeam.logo} className="w-12 h-12 md:w-20 md:h-20 object-contain drop-shadow-lg" />
+            <div className="absolute left-1 md:left-[-50px] top-1/2 -translate-y-1/2 z-20">
+                <img src={homeTeam.logo} className="w-8 h-8 md:w-20 md:h-20 object-contain drop-shadow-lg" />
             </div>
 
-            <div className="w-16 md:w-24 flex items-center justify-center font-bold text-xl md:text-2xl tracking-wider border-r border-white/10 h-full">
+            <div className="w-12 md:w-24 flex items-center justify-center font-bold text-lg md:text-2xl tracking-wider border-r border-white/10 h-full pl-6 md:pl-0">
                 {homeTeam.shortName}
             </div>
-            <div className="w-10 md:w-14 bg-white text-[#001f5b] flex flex-col items-center justify-center text-xs md:text-sm font-bold leading-none border-r border-[#001f5b]/10 h-full">
-                <span className="text-[8px] uppercase tracking-widest text-slate-500">Sets</span>
-                <span className="text-lg md:text-xl">{homeSetsWon}</span>
+            <div className="w-8 md:w-14 bg-white text-[#001f5b] flex flex-col items-center justify-center text-[10px] md:text-sm font-bold leading-none border-r border-[#001f5b]/10 h-full">
+                <span className="text-[6px] md:text-[8px] uppercase tracking-widest text-slate-500">Sets</span>
+                <span className="text-base md:text-xl">{homeSetsWon}</span>
             </div>
-            <div className={`w-14 md:w-20 flex items-center justify-center text-3xl md:text-5xl font-bold h-full ${match.servingTeamId === homeTeam.id ? 'bg-gradient-to-b from-red-600 to-red-700' : 'bg-[#002875]'}`}>
+            <div className={`w-12 md:w-20 flex items-center justify-center text-2xl md:text-5xl font-bold h-full ${match.servingTeamId === homeTeam.id ? 'bg-gradient-to-b from-red-600 to-red-700' : 'bg-[#002875]'}`}>
                 {currentSet.home}
             </div>
         </div>
 
         {/* Center Info / Logo (Trapezoid Style) */}
-        <div className="w-20 md:w-28 bg-gradient-to-b from-[#ff4600] to-[#d43a00] flex flex-col items-center justify-center relative z-10 px-2 skew-x-[-10deg] mx-1 border-x-2 border-white overflow-hidden shadow-lg">
+        <div className="w-16 md:w-28 bg-gradient-to-b from-[#ff4600] to-[#d43a00] flex flex-col items-center justify-center relative z-10 px-1 md:px-2 skew-x-[-10deg] mx-1 border-x-2 border-white overflow-hidden shadow-lg">
              <div className="skew-x-[10deg] flex flex-col items-center w-full">
-                 <div className="text-[8px] md:text-[10px] font-bold text-white uppercase tracking-wider leading-none mb-1 bg-black/20 w-full text-center py-0.5">
+                 <div className="text-[8px] md:text-[10px] font-bold text-white uppercase tracking-wider leading-none mb-0.5 md:mb-1 bg-black/20 w-full text-center py-0.5">
                     Set {match.currentSet + 1}
                  </div>
                  {championshipLogo ? (
-                     <img src={championshipLogo} className="h-6 md:h-8 object-contain brightness-0 invert drop-shadow-md" />
+                     <img src={championshipLogo} className="h-4 md:h-8 object-contain brightness-0 invert drop-shadow-md" />
                  ) : (
-                    <span className="font-bold text-xl text-white italic tracking-tighter">VNL</span>
+                    <span className="font-bold text-base md:text-xl text-white italic tracking-tighter">VNL</span>
                  )}
              </div>
         </div>
 
         {/* Right Team (Away) */}
-        <div className="flex bg-[#001f5b] text-white flex-1 justify-start items-center relative">
-            <div className={`w-14 md:w-20 flex items-center justify-center text-3xl md:text-5xl font-bold h-full ${match.servingTeamId === awayTeam.id ? 'bg-gradient-to-b from-red-600 to-red-700' : 'bg-[#002875]'}`}>
+        <div className="flex bg-[#001f5b] text-white flex-1 justify-start items-center relative rounded-r-lg md:rounded-none overflow-visible">
+            <div className={`w-12 md:w-20 flex items-center justify-center text-2xl md:text-5xl font-bold h-full ${match.servingTeamId === awayTeam.id ? 'bg-gradient-to-b from-red-600 to-red-700' : 'bg-[#002875]'}`}>
                 {currentSet.away}
             </div>
-            <div className="w-10 md:w-14 bg-white text-[#001f5b] flex flex-col items-center justify-center text-xs md:text-sm font-bold leading-none border-l border-[#001f5b]/10 h-full">
-                <span className="text-[8px] uppercase tracking-widest text-slate-500">Sets</span>
-                <span className="text-lg md:text-xl">{awaySetsWon}</span>
+            <div className="w-8 md:w-14 bg-white text-[#001f5b] flex flex-col items-center justify-center text-[10px] md:text-sm font-bold leading-none border-l border-[#001f5b]/10 h-full">
+                <span className="text-[6px] md:text-[8px] uppercase tracking-widest text-slate-500">Sets</span>
+                <span className="text-base md:text-xl">{awaySetsWon}</span>
             </div>
-             <div className="w-16 md:w-24 flex items-center justify-center font-bold text-xl md:text-2xl tracking-wider border-l border-white/10 h-full">
+             <div className="w-12 md:w-24 flex items-center justify-center font-bold text-lg md:text-2xl tracking-wider border-l border-white/10 h-full pr-6 md:pr-0">
                 {awayTeam.shortName}
             </div>
 
             {/* Team Logo Right */}
-            <div className="absolute right-[-30px] md:right-[-50px] top-1/2 -translate-y-1/2 z-20">
-                <img src={awayTeam.logo} className="w-12 h-12 md:w-20 md:h-20 object-contain drop-shadow-lg" />
+            <div className="absolute right-1 md:right-[-50px] top-1/2 -translate-y-1/2 z-20">
+                <img src={awayTeam.logo} className="w-8 h-8 md:w-20 md:h-20 object-contain drop-shadow-lg" />
             </div>
         </div>
     </motion.div>
@@ -131,39 +131,38 @@ export const BroadcastOverlay: React.FC<Props> = ({ match, homeTeam, awayTeam, b
     if (!player) return null;
     const isHome = homeTeam.players.some(p => p.id === player.id);
     
-    // Ensure only one instance is handled by the parent state, this component just renders whoever is active
     return (
         <motion.div 
-            key={player.id} // Key ensures animation restarts on player switch
+            key={player.id} 
             initial={{ x: -100, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -100, opacity: 0 }}
-            className="absolute bottom-28 left-4 md:left-12 flex items-end z-20 font-sports"
+            className="absolute bottom-20 md:bottom-28 left-2 md:left-12 flex items-end z-20 font-sports origin-bottom-left transform scale-[0.7] md:scale-100"
         >
-            {/* Player Image Cutout (Simulated with circle for now) */}
-            <div className="relative z-20 -mr-6 mb-0">
-                <img src={player.image} className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-full border-4 border-white shadow-lg bg-slate-200" />
-                <div className={`absolute bottom-0 right-4 text-white text-xs md:text-sm font-bold px-2 py-0.5 rounded ${isHome ? 'bg-blue-700' : 'bg-red-700'} border border-white`}>
+            {/* Player Image Cutout */}
+            <div className="relative z-20 -mr-4 md:-mr-6 mb-0">
+                <img src={player.image} className="w-20 h-20 md:w-32 md:h-32 object-cover rounded-full border-4 border-white shadow-lg bg-slate-200" />
+                <div className={`absolute bottom-0 right-4 text-white text-[10px] md:text-sm font-bold px-2 py-0.5 rounded ${isHome ? 'bg-blue-700' : 'bg-red-700'} border border-white`}>
                     #{player.number}
                 </div>
             </div>
 
             {/* Info Box */}
-            <div className="bg-[#001f5b] text-white pl-8 pr-4 py-3 rounded-r-lg shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-l-8 border-l-yellow-400 min-w-[220px] md:min-w-[300px]">
-                 <div className="flex justify-between items-end border-b border-white/20 pb-1 mb-2">
-                     <span className="text-lg md:text-2xl font-bold uppercase italic leading-none">{player.name}</span>
-                     <span className="text-[10px] md:text-xs text-yellow-400 font-bold uppercase">{player.position}</span>
+            <div className="bg-[#001f5b] text-white pl-6 md:pl-8 pr-3 md:pr-4 py-2 md:py-3 rounded-r-lg shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-l-8 border-l-yellow-400 min-w-[180px] md:min-w-[300px]">
+                 <div className="flex justify-between items-end border-b border-white/20 pb-1 mb-1 md:mb-2">
+                     <span className="text-base md:text-2xl font-bold uppercase italic leading-none">{player.name}</span>
+                     <span className="text-[8px] md:text-xs text-yellow-400 font-bold uppercase">{player.position}</span>
                  </div>
-                 <div className="flex gap-6 text-xs md:text-sm">
+                 <div className="flex gap-4 md:gap-6 text-xs md:text-sm">
                      <div className="flex flex-col items-center">
-                         <span className="text-[8px] md:text-[10px] text-slate-400 uppercase tracking-wider">Points</span>
-                         <span className="font-bold text-lg md:text-2xl text-white leading-none">{player.stats.points}</span>
+                         <span className="text-[8px] md:text-[10px] text-slate-400 uppercase tracking-wider">Pts</span>
+                         <span className="font-bold text-base md:text-2xl text-white leading-none">{player.stats.points}</span>
                      </div>
                      <div className="flex flex-col items-center">
-                         <span className="text-[8px] md:text-[10px] text-slate-400 uppercase tracking-wider">Attack</span>
-                         <span className="font-bold text-lg md:text-2xl text-green-400 leading-none">{player.stats.attacks}</span>
+                         <span className="text-[8px] md:text-[10px] text-slate-400 uppercase tracking-wider">Atk</span>
+                         <span className="font-bold text-base md:text-2xl text-green-400 leading-none">{player.stats.attacks}</span>
                      </div>
                      <div className="flex flex-col items-center">
-                         <span className="text-[8px] md:text-[10px] text-slate-400 uppercase tracking-wider">Block</span>
-                         <span className="font-bold text-lg md:text-2xl text-yellow-400 leading-none">{player.stats.blocks}</span>
+                         <span className="text-[8px] md:text-[10px] text-slate-400 uppercase tracking-wider">Blk</span>
+                         <span className="font-bold text-base md:text-2xl text-yellow-400 leading-none">{player.stats.blocks}</span>
                      </div>
                  </div>
             </div>
@@ -176,7 +175,7 @@ export const BroadcastOverlay: React.FC<Props> = ({ match, homeTeam, awayTeam, b
       <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
           <motion.div 
             initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-            className="w-[95%] max-w-lg font-sports shadow-[0_0_50px_rgba(0,0,0,0.8)] pointer-events-auto"
+            className="w-[95%] max-w-lg font-sports shadow-[0_0_50px_rgba(0,0,0,0.8)] pointer-events-auto origin-center transform scale-[0.7] md:scale-100"
           >
               {/* Header */}
               <div className="flex">
@@ -250,7 +249,7 @@ export const BroadcastOverlay: React.FC<Props> = ({ match, homeTeam, awayTeam, b
     return (
         <motion.div 
             initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
-            className="absolute top-1/2 right-12 -translate-y-1/2 z-20 flex items-center gap-4"
+            className="absolute top-1/2 right-1 md:right-12 -translate-y-1/2 z-20 flex items-center gap-2 md:gap-4 origin-right transform scale-[0.55] md:scale-100"
         >
              {/* Libero Zone */}
              {liberos.length > 0 && (
@@ -334,10 +333,10 @@ export const BroadcastOverlay: React.FC<Props> = ({ match, homeTeam, awayTeam, b
          {isSetPoint && (
              <motion.div 
                 initial={{ y: -100 }} animate={{ y: 0 }} exit={{ y: -100 }}
-                className="absolute top-0 left-0 right-0 bg-gradient-to-r from-[#001f5b] via-[#002875] to-[#001f5b] border-b-8 border-yellow-400 z-50 py-4 flex items-center justify-center shadow-2xl"
+                className="absolute top-0 left-0 right-0 bg-gradient-to-r from-[#001f5b] via-[#002875] to-[#001f5b] border-b-8 border-yellow-400 z-50 py-2 md:py-4 flex items-center justify-center shadow-2xl"
              >
                  <div className="flex items-center gap-4 animate-pulse">
-                     <span className="text-3xl md:text-5xl font-bold uppercase italic tracking-widest text-white drop-shadow-[0_4px_4px_rgba(0,0,0,1)]">
+                     <span className="text-xl md:text-5xl font-bold uppercase italic tracking-widest text-white drop-shadow-[0_4px_4px_rgba(0,0,0,1)]">
                          {match.currentSet === 4 && (currentSet.home >= 14 || currentSet.away >= 14) ? 'MATCH POINT' : 'SET POINT'}
                      </span>
                  </div>
@@ -352,18 +351,18 @@ export const BroadcastOverlay: React.FC<Props> = ({ match, homeTeam, awayTeam, b
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="absolute inset-0 z-50 flex items-center justify-center bg-[#001f5b]/95 backdrop-blur-md pointer-events-auto"
         >
-          {onCloseIntro && <button onClick={onCloseIntro} className="absolute top-8 right-8 text-white/50 hover:text-white"><X size={32} /></button>}
-          <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="flex flex-col items-center w-full max-w-6xl p-4">
-            <div className="bg-[#ff4600] text-white px-12 py-3 text-3xl font-bold italic tracking-widest mb-12 skew-x-[-10deg] border-4 border-white shadow-[0_0_50px_rgba(255,70,0,0.5)]">THE FINALS</div>
-            <div className="flex flex-col md:flex-row items-center justify-between w-full gap-8">
+          {onCloseIntro && <button onClick={onCloseIntro} className="absolute top-4 right-4 md:top-8 md:right-8 text-white/50 hover:text-white"><X className="w-6 h-6 md:w-8 md:h-8" /></button>}
+          <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="flex flex-col items-center w-full max-w-6xl p-4 origin-center transform scale-[0.7] md:scale-100">
+            <div className="bg-[#ff4600] text-white px-8 md:px-12 py-2 md:py-3 text-xl md:text-3xl font-bold italic tracking-widest mb-8 md:mb-12 skew-x-[-10deg] border-4 border-white shadow-[0_0_50px_rgba(255,70,0,0.5)]">THE FINALS</div>
+            <div className="flex flex-col md:flex-row items-center justify-between w-full gap-4 md:gap-8">
                <div className="flex flex-col items-center">
-                   <img src={homeTeam.logo} className="w-40 h-40 md:w-80 md:h-80 object-contain drop-shadow-[0_0_50px_rgba(255,255,255,0.2)]" />
-                   <h1 className="text-5xl md:text-9xl font-bold mt-4 italic text-center uppercase text-white drop-shadow-xl">{homeTeam.shortName}</h1>
+                   <img src={homeTeam.logo} className="w-24 h-24 md:w-80 md:h-80 object-contain drop-shadow-[0_0_50px_rgba(255,255,255,0.2)]" />
+                   <h1 className="text-3xl md:text-9xl font-bold mt-4 italic text-center uppercase text-white drop-shadow-xl">{homeTeam.shortName}</h1>
                </div>
-               <div className="text-6xl md:text-9xl font-bold text-yellow-400 italic mx-8">VS</div>
+               <div className="text-4xl md:text-9xl font-bold text-yellow-400 italic mx-4 md:mx-8">VS</div>
                <div className="flex flex-col items-center">
-                   <img src={awayTeam.logo} className="w-40 h-40 md:w-80 md:h-80 object-contain drop-shadow-[0_0_50px_rgba(255,255,255,0.2)]" />
-                   <h1 className="text-5xl md:text-9xl font-bold mt-4 italic text-center uppercase text-white drop-shadow-xl">{awayTeam.shortName}</h1>
+                   <img src={awayTeam.logo} className="w-24 h-24 md:w-80 md:h-80 object-contain drop-shadow-[0_0_50px_rgba(255,255,255,0.2)]" />
+                   <h1 className="text-3xl md:text-9xl font-bold mt-4 italic text-center uppercase text-white drop-shadow-xl">{awayTeam.shortName}</h1>
                </div>
             </div>
           </motion.div>
@@ -376,7 +375,7 @@ export const BroadcastOverlay: React.FC<Props> = ({ match, homeTeam, awayTeam, b
         {broadcastState.showMiniScorebug && !broadcastState.showScorebug && (
            <motion.div 
              initial={{ y: -100 }} animate={{ y: 0 }} exit={{ y: -100 }}
-             className="absolute top-6 left-6 flex items-start z-30 font-sports shadow-[0_10px_30px_rgba(0,0,0,0.5)] scale-75 origin-top-left"
+             className="absolute top-2 left-2 md:top-6 md:left-6 flex items-start z-30 font-sports shadow-[0_10px_30px_rgba(0,0,0,0.5)] origin-top-left transform scale-[0.6] md:scale-75"
            >
              {/* Championship Logo Left of Mini Bug - ENLARGED */}
              {championshipLogo && (
@@ -432,7 +431,7 @@ export const BroadcastOverlay: React.FC<Props> = ({ match, homeTeam, awayTeam, b
             <div className="absolute inset-0 z-50 bg-[#001f5b]/90 backdrop-blur-md flex items-center justify-center font-sports text-white">
               <motion.div 
                  initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                 className="bg-white p-2 shadow-2xl skew-x-[-5deg]" 
+                 className="bg-white p-2 shadow-2xl skew-x-[-5deg] origin-center transform scale-[0.6] md:scale-100" 
               >
                   <div className="bg-[#001f5b] w-[90vw] max-w-[600px] flex flex-col items-center pb-8 border border-white/10 skew-x-[5deg]">
                        <div className="bg-[#ff4600] text-white w-full text-center py-4 text-4xl font-bold italic tracking-widest mb-8 uppercase border-b-4 border-white">Timeout</div>

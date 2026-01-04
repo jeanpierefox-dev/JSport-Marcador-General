@@ -99,10 +99,6 @@ const LoginScreen = ({ users, onLogin }: { users: User[], onLogin: (user: User) 
               Iniciar Sesión
             </button>
           </form>
-          
-          <div className="mt-6 text-center">
-             <p className="text-xs text-slate-500">Credenciales Demo: admin / 123</p>
-          </div>
         </div>
       </div>
     </div>
@@ -169,7 +165,7 @@ const App = () => {
   const [currentMatchId, setCurrentMatchId] = useState<string | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null); // This is the state for the user being edited
   const [editingChampId, setEditingChampId] = useState<string | null>(null);
   
   // Team Editing State
@@ -580,6 +576,12 @@ const App = () => {
       }
   };
 
+  const handleDeleteUser = (username: string) => {
+    if (window.confirm("¿Seguro que deseas eliminar este usuario?")) {
+        setUsers(users.filter(u => u.username !== username));
+    }
+  };
+
   const handleEditMatchDate = (matchId: string, newDate: string) => {
     broadcastUpdate({ 
         championships: championships.map(c => ({
@@ -687,42 +689,42 @@ const App = () => {
     ].filter(item => item.id !== 'users' || currentUser.role === UserRole.ADMIN);
 
     return (
-    <div className="flex flex-col items-center justify-center h-full text-white p-4 overflow-y-auto">
-        <div className="mb-12 flex flex-col items-center animate-fade-in-up">
+    <div className="flex flex-col items-center justify-start md:justify-center h-full text-white p-2 md:p-4 overflow-y-auto w-full">
+        <div className="mb-6 md:mb-12 flex flex-col items-center animate-fade-in-up transform scale-75 md:scale-100 origin-top mt-4 md:mt-0">
             <div className="relative mb-6 group cursor-default">
                 <div className="absolute inset-0 bg-blue-600 blur-[60px] opacity-20 rounded-full group-hover:opacity-30 transition duration-500"></div>
-                <div className="relative bg-slate-900/50 border border-slate-700/50 p-8 rounded-3xl shadow-2xl backdrop-blur-sm flex items-center gap-6 transform -skew-x-6 hover:scale-105 transition duration-500">
-                    <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-5 rounded-2xl shadow-inner border border-white/10">
-                        <Trophy size={64} className="text-white" strokeWidth={2} />
+                <div className="relative bg-slate-900/50 border border-slate-700/50 p-6 md:p-8 rounded-3xl shadow-2xl backdrop-blur-sm flex items-center gap-4 md:gap-6 transform -skew-x-6 hover:scale-105 transition duration-500">
+                    <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-4 md:p-5 rounded-2xl shadow-inner border border-white/10">
+                        <Trophy size={48} className="text-white md:w-16 md:h-16" strokeWidth={2} />
                     </div>
                     <div className="flex flex-col">
-                        <h1 className="text-7xl md:text-8xl font-sports font-bold text-white tracking-tighter italic leading-none drop-shadow-2xl">
+                        <h1 className="text-5xl md:text-8xl font-sports font-bold text-white tracking-tighter italic leading-none drop-shadow-2xl">
                             J<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600">Sport</span>
                         </h1>
-                        <span className="text-sm text-slate-400 font-bold tracking-[0.3em] uppercase mt-2 text-right">Solutions</span>
+                        <span className="text-sm text-slate-400 font-bold tracking-[0.3em] uppercase mt-1 md:mt-2 text-right">Solutions</span>
                     </div>
                 </div>
             </div>
-            <p className="text-blue-400 tracking-widest uppercase text-xs font-bold mt-8 bg-blue-900/20 px-6 py-2 rounded-full border border-blue-900/50 shadow-lg">Professional Volleyball Manager</p>
+            <p className="text-blue-400 tracking-widest uppercase text-xs font-bold mt-4 md:mt-8 bg-blue-900/20 px-6 py-2 rounded-full border border-blue-900/50 shadow-lg">Professional Volleyball Manager</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 w-full max-w-4xl px-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-8 w-full max-w-4xl px-2 md:px-4 mb-8">
             {menuItems.map(item => (
                 <button 
                     key={item.id}
                     onClick={() => setActiveTab(item.id as any)}
-                    className="group relative overflow-hidden rounded-2xl p-6 md:p-8 bg-slate-800/80 border border-slate-700 hover:border-slate-500 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 flex flex-col items-center gap-4 backdrop-blur-sm"
+                    className="group relative overflow-hidden rounded-2xl p-4 md:p-8 bg-slate-800/80 border border-slate-700 hover:border-slate-500 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 flex flex-col items-center gap-3 md:gap-4 backdrop-blur-sm"
                 >
                     <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${item.color}`}></div>
-                    <div className={`p-4 rounded-full bg-slate-950 text-white group-hover:scale-110 transition-transform duration-300 ${item.color.replace('bg-', 'text-')}`}>
-                        <item.icon size={32} />
+                    <div className={`p-3 md:p-4 rounded-full bg-slate-950 text-white group-hover:scale-110 transition-transform duration-300 ${item.color.replace('bg-', 'text-')}`}>
+                        <item.icon size={24} className="md:w-8 md:h-8" />
                     </div>
-                    <span className="font-bold text-lg md:text-xl text-slate-200 group-hover:text-white uppercase tracking-wider">{item.label}</span>
+                    <span className="font-bold text-sm md:text-xl text-slate-200 group-hover:text-white uppercase tracking-wider">{item.label}</span>
                 </button>
             ))}
         </div>
         
-        <button onClick={() => setCurrentUser(null)} className="mt-auto md:mt-12 text-slate-500 hover:text-red-400 flex items-center gap-2 text-sm transition py-4">
+        <button onClick={() => setCurrentUser(null)} className="mt-auto mb-4 md:mt-12 text-slate-500 hover:text-red-400 flex items-center gap-2 text-sm transition py-4">
             <LogOut size={16} /> Cerrar Sesión
         </button>
     </div>
@@ -1125,13 +1127,131 @@ const App = () => {
     );
   };
 
-  const renderUsers = () => (
-     <PageContainer title="Gestión de Usuarios" icon={Users} onBack={() => setActiveTab('home')}>
-     <div className="p-4 md:p-8 overflow-y-auto h-full pb-20">
-      {/* ... (Existing User Code) ... */}
-     </div>
-    </PageContainer>
-  );
+  const renderUsers = () => {
+    return (
+        <PageContainer title="Gestión de Usuarios" icon={Users} onBack={() => setActiveTab('home')}>
+            <div className="p-4 md:p-8 overflow-y-auto h-full pb-20">
+                
+                {/* Connection Status Banner (Visual Only - Frontend App) */}
+                <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                     <div className="flex items-center gap-3">
+                        <div className="bg-green-500/20 p-2 rounded-full">
+                            <Wifi className="text-green-500" size={24} />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-white">Estado de Conexión</h4>
+                            <p className="text-xs text-slate-400">Modo Local (Sincronización en este navegador)</p>
+                        </div>
+                     </div>
+                     <div className="text-xs text-slate-500 bg-black/30 px-3 py-2 rounded max-w-md">
+                         * Para conectar múltiples dispositivos vía internet, esta aplicación requiere un servidor backend dedicado. Actualmente opera en modo "peer-to-peer" local.
+                     </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Create/Edit Form */}
+                    <div className="lg:col-span-1">
+                        <div className="bg-slate-800/80 border border-slate-700 p-6 rounded-xl shadow-lg backdrop-blur-sm sticky top-4">
+                            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                {editingUser ? <Edit size={18} className="text-yellow-500"/> : <UserPlus size={18} className="text-blue-500"/>}
+                                {editingUser ? 'Editar Usuario' : 'Crear Nuevo Usuario'}
+                            </h3>
+                            
+                            <form onSubmit={(e: any) => {
+                                e.preventDefault();
+                                const formData = {
+                                    name: e.target.name.value,
+                                    username: e.target.username.value,
+                                    password: e.target.password.value,
+                                    role: e.target.role.value
+                                };
+                                handleAddOrUpdateUser(formData);
+                                e.target.reset();
+                            }} className="space-y-4">
+                                <div>
+                                    <label className="text-xs text-slate-400 mb-1 block">Nombre Completo</label>
+                                    <input name="name" defaultValue={editingUser?.name} placeholder="Ej: Juan Perez" className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white focus:border-blue-500 outline-none" required />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-slate-400 mb-1 block">Usuario (Login)</label>
+                                    <input name="username" defaultValue={editingUser?.username} disabled={!!editingUser} placeholder="Ej: jperez" className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white focus:border-blue-500 outline-none disabled:opacity-50" required />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-slate-400 mb-1 block">Contraseña</label>
+                                    <input name="password" type="password" defaultValue={(editingUser as any)?.password} placeholder="••••••" className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white focus:border-blue-500 outline-none" required />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-slate-400 mb-1 block">Rol</label>
+                                    <select name="role" defaultValue={editingUser?.role || UserRole.VIEWER} className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white focus:border-blue-500 outline-none">
+                                        <option value={UserRole.ADMIN}>ADMIN (Director - Full Acceso)</option>
+                                        <option value={UserRole.REFEREE}>REFEREE (Solo Puntaje)</option>
+                                        <option value={UserRole.COACH}>COACH (Entrenador)</option>
+                                        <option value={UserRole.VIEWER}>VIEWER (Solo Ver)</option>
+                                    </select>
+                                </div>
+
+                                <div className="flex gap-2 pt-2">
+                                    <button className={`flex-1 py-2 rounded font-bold text-white shadow-lg transition flex items-center justify-center gap-2 ${editingUser ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-blue-600 hover:bg-blue-500'}`}>
+                                        {editingUser ? <Save size={18}/> : <Plus size={18}/>}
+                                        {editingUser ? 'Guardar' : 'Crear Usuario'}
+                                    </button>
+                                    {editingUser && (
+                                        <button type="button" onClick={() => setEditingUser(null)} className="px-4 bg-slate-700 hover:bg-slate-600 rounded text-slate-300">
+                                            Cancelar
+                                        </button>
+                                    )}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    {/* User List */}
+                    <div className="lg:col-span-2">
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden shadow-lg">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-900 text-slate-400 text-xs uppercase tracking-wider">
+                                    <tr>
+                                        <th className="p-4 font-bold">Usuario</th>
+                                        <th className="p-4 font-bold">Nombre</th>
+                                        <th className="p-4 font-bold">Rol</th>
+                                        <th className="p-4 text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-700">
+                                    {users.map(user => (
+                                        <tr key={user.username} className="hover:bg-slate-700/50 transition">
+                                            <td className="p-4 font-mono text-blue-300">{user.username}</td>
+                                            <td className="p-4 font-bold text-white">{user.name}</td>
+                                            <td className="p-4">
+                                                <span className={`text-[10px] uppercase px-2 py-1 rounded font-bold border ${
+                                                    user.role === UserRole.ADMIN ? 'bg-red-900/30 text-red-400 border-red-900' :
+                                                    user.role === UserRole.REFEREE ? 'bg-yellow-900/30 text-yellow-400 border-yellow-900' :
+                                                    user.role === UserRole.COACH ? 'bg-green-900/30 text-green-400 border-green-900' :
+                                                    'bg-slate-700 text-slate-400 border-slate-600'
+                                                }`}>
+                                                    {user.role}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 flex justify-end gap-2">
+                                                <button onClick={() => setEditingUser(user)} className="p-2 hover:bg-slate-600 rounded text-slate-400 hover:text-white transition">
+                                                    <Edit size={16} />
+                                                </button>
+                                                <button onClick={() => handleDeleteUser(user.username)} className="p-2 hover:bg-red-900/50 rounded text-slate-400 hover:text-red-400 transition" disabled={user.username === currentUser.username}>
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            {users.length === 0 && <p className="p-8 text-center text-slate-500 italic">No hay usuarios registrados.</p>}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </PageContainer>
+    );
+  };
 
   const renderStats = () => {
     // Calculate Dream Team (Simple logic: Best in each category)
@@ -1312,6 +1432,14 @@ const App = () => {
                 {/* 2. Broadcast Graphics Switcher */}
                 {currentUser.role === UserRole.ADMIN && (
                     <div className="w-full md:w-1/2 p-4 bg-slate-900 overflow-y-auto">
+                        <button
+                            onClick={() => setActiveTab('live')}
+                            className="w-full mb-4 bg-red-600 hover:bg-red-500 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(220,38,38,0.4)] border border-red-500 transition transform hover:scale-[1.02]"
+                        >
+                            <Tv size={24} />
+                            VER TRANSMISIÓN (MONITOR)
+                        </button>
+
                         <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2"><Monitor size={14}/> Gráficos de Transmisión</div>
                         <div className="grid grid-cols-3 gap-3">
                             <button onClick={() => toggleBroadcastFeature('showMiniScorebug')} className={`h-16 rounded-lg border-2 flex flex-col items-center justify-center transition font-bold text-sm ${broadcastState.showMiniScorebug ? 'bg-blue-600 border-blue-400 text-white shadow-[0_0_15px_rgba(37,99,235,0.5)]' : 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:border-slate-600'}`}>
@@ -1498,7 +1626,16 @@ const App = () => {
     return (
       <div className="flex flex-col h-full w-full bg-slate-900/50 backdrop-blur-md">
         <header className="bg-black border-b border-slate-800 p-2 flex items-center justify-between z-50">
-             <button onClick={() => setCurrentMatchId(null)} className="text-slate-400 hover:text-white flex items-center gap-2 text-sm bg-slate-800/50 px-3 py-2 rounded-full border border-slate-700 active:scale-95 touch-manipulation"><ArrowLeft size={20}/> Salir de Transmisión</button>
+             <div className="flex items-center gap-2">
+                 <button onClick={() => setCurrentMatchId(null)} className="text-slate-400 hover:text-white flex items-center gap-2 text-sm bg-slate-800/50 px-3 py-2 rounded-full border border-slate-700 active:scale-95 touch-manipulation"><ArrowLeft size={20}/> Salir</button>
+                 <button 
+                    onClick={() => setActiveTab('control')}
+                    className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-full font-bold flex items-center gap-2 shadow-lg border border-blue-400 text-sm transition"
+                 >
+                    <Gamepad2 size={16} /> <span className="hidden md:inline">Panel de Control</span>
+                 </button>
+             </div>
+             
              <div className="flex items-center gap-4">
                  <div className="hidden md:flex items-center gap-2 text-xs text-slate-500 bg-slate-900 px-3 py-1 rounded-full border border-slate-800">
                      <Wifi size={12} className="text-green-500" />

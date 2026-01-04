@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Match, Team, BroadcastState, Player, ActionType } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mic, Video as VideoIcon } from 'lucide-react';
+import { X, Mic, Video as VideoIcon, Shield } from 'lucide-react';
 
 interface Props {
   match: Match;
@@ -234,25 +234,44 @@ export const BroadcastOverlay: React.FC<Props> = ({ match, homeTeam, awayTeam, b
   // 4. Rotation Overlay (Visual Court)
   const RotationOverlay = () => {
     const servingTeam = match.servingTeamId === homeTeam.id ? homeTeam : awayTeam;
-    // Assuming players 0-5 in the list correspond to positions 1-6 for simplicity in this MVP
-    // Standard Rotation: 4-3-2 (Front), 5-6-1 (Back)
     const players = servingTeam.players.slice(0, 6);
+    const liberos = servingTeam.players.filter(p => p.position === 'Líbero');
     
     // Position Map (Top=Net)
     const positions = [
-        { id: 4, label: 'FL', left: '16%', top: '30%' },
+        { id: 4, label: 'FL', left: '20%', top: '30%' },
         { id: 3, label: 'FC', left: '50%', top: '30%' },
-        { id: 2, label: 'FR', left: '84%', top: '30%' },
-        { id: 5, label: 'BL', left: '16%', top: '70%' },
+        { id: 2, label: 'FR', left: '80%', top: '30%' },
+        { id: 5, label: 'BL', left: '20%', top: '70%' },
         { id: 6, label: 'BC', left: '50%', top: '70%' },
-        { id: 1, label: 'BR', left: '84%', top: '70%' }, // Server
+        { id: 1, label: 'BR', left: '80%', top: '70%' }, // Server
     ];
 
     return (
         <motion.div 
             initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
-            className="absolute top-1/2 right-12 -translate-y-1/2 z-20"
+            className="absolute top-1/2 right-12 -translate-y-1/2 z-20 flex items-center gap-4"
         >
+             {/* Libero Zone */}
+             {liberos.length > 0 && (
+                <div className="flex flex-col gap-2 p-2 bg-black/40 rounded border border-white/20 backdrop-blur-sm">
+                    <div className="text-[10px] text-center font-bold text-white uppercase tracking-wider mb-1 flex items-center justify-center gap-1">
+                        <Shield size={10} className="text-yellow-500"/> Líbero
+                    </div>
+                    {liberos.map(lib => (
+                        <div key={lib.id} className="flex flex-col items-center">
+                             <div className="relative">
+                                <img src={lib.image} className="w-10 h-10 rounded-full border-2 border-yellow-500 bg-slate-200 object-cover shadow-md" />
+                                <div className="absolute -bottom-1 -right-1 bg-yellow-600 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-white">
+                                    {lib.number}
+                                </div>
+                             </div>
+                             <span className="text-[8px] font-bold text-white mt-1 bg-black/50 px-1 rounded truncate max-w-[50px]">{lib.name}</span>
+                        </div>
+                    ))}
+                </div>
+             )}
+
              <div className="bg-[#eab308] border-4 border-white w-64 h-80 relative shadow-[0_20px_50px_rgba(0,0,0,0.8)] rounded">
                  {/* Court Lines */}
                  <div className="absolute top-[33%] w-full h-1 bg-white/50"></div> {/* Attack Line */}
@@ -268,10 +287,6 @@ export const BroadcastOverlay: React.FC<Props> = ({ match, homeTeam, awayTeam, b
 
                  {/* Players */}
                  {positions.map((pos, index) => {
-                     // Mapping simple index to position. In real app, match specific position ID.
-                     // Map: Pos 1 is usually index 0 in serving order if we rotate list, but let's just take index based on zone for now
-                     // Let's assume the roster is ordered 1 to 6.
-                     // Index 0 -> Pos 1, Index 1 -> Pos 2, etc.
                      const pIndex = pos.id - 1; 
                      const player = players[pIndex];
 

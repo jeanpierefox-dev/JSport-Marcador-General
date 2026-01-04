@@ -9,7 +9,7 @@ import {
   Video, Mic, ShieldAlert, X, Shirt, BarChart2,
   Plus, Edit, Trash2, Save, UserPlus, Upload, ArrowLeft, Image as ImageIcon,
   Shuffle, List, Timer, Lock, User as UserIcon, StopCircle,
-  ChevronDown, ChevronUp, Radio, Home, Camera, Gamepad2
+  ChevronDown, ChevronUp, Radio, Home, Camera, Gamepad2, Globe, Wifi, Maximize, Minimize
 } from 'lucide-react';
 
 // --- Components ---
@@ -148,10 +148,20 @@ const App = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<'home' | 'teams' | 'fixture' | 'live' | 'control' | 'users' | 'stats'>('home');
   
-  // Data State
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
-  const [championships, setChampionships] = useState<Championship[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
+  // Data State with LocalStorage Persistence
+  const [users, setUsers] = useState<User[]>(() => {
+      const saved = localStorage.getItem('voleypro_users');
+      return saved ? JSON.parse(saved) : MOCK_USERS;
+  });
+  const [championships, setChampionships] = useState<Championship[]>(() => {
+      const saved = localStorage.getItem('voleypro_championships');
+      return saved ? JSON.parse(saved) : [];
+  });
+  const [teams, setTeams] = useState<Team[]>(() => {
+      const saved = localStorage.getItem('voleypro_teams');
+      return saved ? JSON.parse(saved) : [];
+  });
+
   const [currentMatchId, setCurrentMatchId] = useState<string | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
@@ -178,9 +188,63 @@ const App = () => {
   });
   const [aiCommentary, setAiCommentary] = useState<string>("");
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   // Video Stream Ref
   const videoRef = useRef<HTMLVideoElement>(null);
+  const broadcastContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Synchronization Channel
+  const syncChannelRef = useRef<BroadcastChannel | null>(null);
+
+  // --- Persistence Effects ---
+  useEffect(() => {
+      localStorage.setItem('voleypro_users', JSON.stringify(users));
+  }, [users]);
+
+  useEffect(() => {
+      localStorage.setItem('voleypro_championships', JSON.stringify(championships));
+  }, [championships]);
+
+  useEffect(() => {
+      localStorage.setItem('voleypro_teams', JSON.stringify(teams));
+  }, [teams]);
+
+
+  useEffect(() => {
+    // Initialize BroadcastChannel for cross-tab sync on same machine
+    const channel = new BroadcastChannel('voleypro_sync_channel');
+    syncChannelRef.current = channel;
+
+    channel.onmessage = (event) => {
+        const { type, payload } = event.data;
+        if (type === 'SYNC_STATE') {
+            if (payload.championships) setChampionships(payload.championships);
+            if (payload.broadcastState) setBroadcastState(payload.broadcastState);
+            if (payload.currentMatchId) setCurrentMatchId(payload.currentMatchId);
+        }
+    };
+
+    return () => {
+        channel.close();
+    };
+  }, []);
+
+  const broadcastUpdate = (updates: { championships?: Championship[], broadcastState?: BroadcastState, currentMatchId?: string | null }) => {
+      // Local Update
+      if (updates.championships) setChampionships(updates.championships);
+      if (updates.broadcastState) setBroadcastState(updates.broadcastState);
+      if (updates.currentMatchId !== undefined) setCurrentMatchId(updates.currentMatchId!);
+
+      // Network Update
+      if (syncChannelRef.current) {
+          syncChannelRef.current.postMessage({
+              type: 'SYNC_STATE',
+              payload: updates
+          });
+      }
+  };
+
 
   // --- Handlers ---
 
@@ -191,6 +255,16 @@ const App = () => {
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = error => reject(error);
     });
+  };
+
+  const toggleFullscreen = () => {
+      if (!document.fullscreenElement) {
+          if (broadcastContainerRef.current) {
+              broadcastContainerRef.current.requestFullscreen().then(() => setIsFullscreen(true)).catch(err => console.log(err));
+          }
+      } else {
+          document.exitFullscreen().then(() => setIsFullscreen(false));
+      }
   };
   
   // Camera Access Effect
@@ -216,8 +290,18 @@ const App = () => {
             };
 
             // Attempt sequence to find working hardware
-            // 1. Environment Camera + Audio
-            let stream = await getMedia({ video: { facingMode: 'environment' }, audio: true });
+            // Priority: Environment (Back) camera, Landscape Aspect Ratio
+            const idealConstraints = { 
+                video: { 
+                    facingMode: 'environment',
+                    width: { ideal: 1280 }, 
+                    height: { ideal: 720 }
+                }, 
+                audio: true 
+            };
+
+            // 1. Ideal Landscape Camera
+            let stream = await getMedia(idealConstraints);
             
             // 2. Fallback: Any Video + Audio (e.g. Webcam)
             if (!stream) {
@@ -312,20 +396,22 @@ const App = () => {
         }
       }
     }
-    setChampionships([...championships, newChamp]);
+    broadcastUpdate({ championships: [...championships, newChamp] });
   };
 
   const handleDeleteChampionship = (id: string) => {
       if(window.confirm("¿Estás seguro de eliminar este campeonato y todos sus partidos?")) {
-          setChampionships(prev => prev.filter(c => c.id !== id));
+          broadcastUpdate({ championships: championships.filter(c => c.id !== id) });
       }
   };
 
   const handleUpdateMatchStatus = (matchId: string, status: 'LIVE' | 'FINISHED' | 'SCHEDULED') => {
-      setChampionships(prev => prev.map(c => ({
-          ...c,
-          matches: c.matches.map(m => m.id === matchId ? { ...m, status } : m)
-      })));
+      broadcastUpdate({ 
+          championships: championships.map(c => ({
+            ...c,
+            matches: c.matches.map(m => m.id === matchId ? { ...m, status } : m)
+          }))
+      });
   };
 
   const handleGenerateNextPhase = (champId: string) => {
@@ -395,7 +481,7 @@ const App = () => {
           } as Match;
           
           const updatedMatches = [...champ.matches, semi1, semi2];
-          setChampionships(prev => prev.map(c => c.id === champId ? { ...c, matches: updatedMatches } : c));
+          broadcastUpdate({ championships: championships.map(c => c.id === champId ? { ...c, matches: updatedMatches } : c) });
       }
   };
 
@@ -507,10 +593,12 @@ const App = () => {
   };
 
   const handleEditMatchDate = (matchId: string, newDate: string) => {
-    setChampionships(prev => prev.map(c => ({
-      ...c,
-      matches: c.matches.map(m => m.id === matchId ? { ...m, date: newDate } : m)
-    })));
+    broadcastUpdate({ 
+        championships: championships.map(c => ({
+            ...c,
+            matches: c.matches.map(m => m.id === matchId ? { ...m, date: newDate } : m)
+        }))
+    });
   };
 
   const handleScoreUpdate = async (matchId: string, teamId: string, points: number, action: ActionType, playerId?: string) => {
@@ -553,11 +641,12 @@ const App = () => {
     }
     
     // Set logic
+    let newState = {...broadcastState};
     if ((setScore.home >= 25 || setScore.away >= 25) && Math.abs(setScore.home - setScore.away) >= 2) {
         match.currentSet++;
         match.sets.push({home: 0, away: 0});
-        setBroadcastState(prev => ({...prev, showMatchIntro: true }));
-        setTimeout(() => setBroadcastState(prev => ({...prev, showMatchIntro: false})), 3000);
+        newState.showMatchIntro = true;
+        setTimeout(() => broadcastUpdate({ broadcastState: {...broadcastState, showMatchIntro: false} }), 3000);
     }
     
     // Check Match End (Best of 5)
@@ -566,15 +655,14 @@ const App = () => {
     
     if (homeSets === 3 || awaySets === 3) {
         match.status = 'FINISHED';
-        // Ensure status updates globally
-        handleUpdateMatchStatus(matchId, 'FINISHED');
     }
 
     if (match.servingTeamId !== teamId) {
        match.servingTeamId = teamId;
     }
 
-    setChampionships(champs);
+    broadcastUpdate({ championships: champs, broadcastState: newState });
+    
     const homeTeam = teams.find(t => t.id === match!.homeTeamId)!;
     const awayTeam = teams.find(t => t.id === match!.awayTeamId)!;
     const commentary = await generateAICommentary(match, homeTeam, awayTeam, event);
@@ -582,13 +670,8 @@ const App = () => {
   };
 
   const toggleBroadcastFeature = (feature: keyof BroadcastState) => {
-     setBroadcastState(prev => {
-         const newState = { ...prev, [feature]: !prev[feature] };
-         if (feature === 'triggerTransition' && newState.triggerTransition) {
-            // Logic handled in overlay
-         }
-         return newState;
-     });
+     const newState = { ...broadcastState, [feature]: !broadcastState[feature] };
+     broadcastUpdate({ broadcastState: newState });
   };
 
 
@@ -1249,7 +1332,7 @@ const App = () => {
                   return (
                       <button 
                         key={m.id} 
-                        onClick={() => setCurrentMatchId(m.id)}
+                        onClick={() => broadcastUpdate({ currentMatchId: m.id })}
                         className="bg-slate-800 p-4 rounded-xl border border-slate-700 hover:border-red-500 hover:bg-slate-750 transition flex items-center justify-between group"
                       >
                           <div className="flex items-center gap-3">
@@ -1329,13 +1412,24 @@ const App = () => {
       <div className="flex flex-col h-full w-full bg-slate-900/50 backdrop-blur-md">
         <header className="bg-black border-b border-slate-800 p-2 flex items-center justify-between">
              <button onClick={() => setCurrentMatchId(null)} className="text-slate-400 hover:text-white flex items-center gap-2 text-sm"><ArrowLeft size={16}/> Salir de Transmisión</button>
-             <div className="flex items-center gap-2">
-                 <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
-                 <span className="text-xs font-bold text-red-600 tracking-widest uppercase">EN VIVO</span>
+             <div className="flex items-center gap-4">
+                 <div className="hidden md:flex items-center gap-2 text-xs text-slate-500 bg-slate-900 px-3 py-1 rounded-full border border-slate-800">
+                     <Wifi size={12} className="text-green-500" />
+                     Sincronización Local Activa
+                 </div>
+                 <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
+                    <span className="text-xs font-bold text-red-600 tracking-widest uppercase">EN VIVO</span>
+                 </div>
+                 {isBroadcaster && (
+                     <button onClick={toggleFullscreen} className="bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-full border border-slate-600 transition">
+                         {isFullscreen ? <Minimize size={16}/> : <Maximize size={16}/>}
+                     </button>
+                 )}
              </div>
         </header>
         {/* FULLSCREEN LIVE MONITOR */}
-        <div className="flex-1 bg-black relative justify-center overflow-hidden flex items-center">
+        <div ref={broadcastContainerRef} className="flex-1 bg-black relative justify-center overflow-hidden flex items-center w-full">
             {isBroadcaster ? (
                  <>
                     <video ref={videoRef} autoPlay playsInline muted className="absolute w-full h-full object-cover z-0" />
@@ -1359,7 +1453,7 @@ const App = () => {
             )}
             
             {/* Aspect Ratio Container for Video */}
-            <div className="aspect-video w-full max-h-full relative shadow-2xl bg-black/10 z-10 pointer-events-none">
+            <div className={`aspect-video w-full max-h-full relative shadow-2xl bg-black/10 z-10 pointer-events-none ${isFullscreen ? 'h-full w-full max-h-screen' : ''}`}>
                 <div className="pointer-events-auto w-full h-full">
                 <BroadcastOverlay 
                     match={activeMatch} 

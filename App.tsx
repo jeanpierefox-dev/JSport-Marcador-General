@@ -3,13 +3,14 @@ import { UserRole, Championship, Team, Match, BroadcastState, Player, ActionType
 import { MOCK_USERS, PLACEHOLDER_LOGOS, POSITIONS } from './constants';
 import { BroadcastOverlay } from './components/BroadcastOverlay';
 import { generateAICommentary } from './services/geminiService';
+import { Peer } from "peerjs";
 import { 
   Trophy, Users, Calendar, Tv, Settings, LogOut, 
   Play, Pause, RotateCcw, Monitor, FileText, 
   Video, Mic, ShieldAlert, X, Shirt, BarChart2,
   Plus, Edit, Trash2, Save, UserPlus, Upload, ArrowLeft, Image as ImageIcon,
   Shuffle, List, Timer, Lock, User as UserIcon, StopCircle,
-  ChevronDown, ChevronUp, Radio, Home, Camera, Gamepad2, Globe, Wifi, Maximize, Minimize, RefreshCcw, Hand, Zap, Medal, Star, Target
+  ChevronDown, ChevronUp, Radio, Home, Camera, Gamepad2, Globe, Wifi, Maximize, Minimize, RefreshCcw, Hand, Zap, Medal, Star, Target, Cloud, Copy, Check
 } from 'lucide-react';
 
 // --- Components ---
@@ -146,7 +147,7 @@ const PageContainer = ({ title, icon: Icon, onBack, children }: any) => (
 const App = () => {
   // Global State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'teams' | 'fixture' | 'live' | 'control' | 'users' | 'stats'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'teams' | 'fixture' | 'live' | 'control' | 'users' | 'stats' | 'cloud'>('home');
   
   // Data State with LocalStorage Persistence
   const [users, setUsers] = useState<User[]>(() => {
@@ -188,6 +189,13 @@ const App = () => {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+
+  // PeerJS State
+  const [peerId, setPeerId] = useState<string>('');
+  const [remotePeerId, setRemotePeerId] = useState<string>('');
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
+  const peerRef = useRef<Peer | null>(null);
+  const connRef = useRef<any>(null);
   
   // Video Stream Ref
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -235,13 +243,85 @@ const App = () => {
       if (updates.broadcastState) setBroadcastState(updates.broadcastState);
       if (updates.currentMatchId !== undefined) setCurrentMatchId(updates.currentMatchId!);
 
-      // Network Update
+      const payload = updates;
+
+      // Network Update (Local Tab)
       if (syncChannelRef.current) {
           syncChannelRef.current.postMessage({
               type: 'SYNC_STATE',
-              payload: updates
+              payload: payload
           });
       }
+
+      // Cloud Update (PeerJS)
+      if (connRef.current && connectionStatus === 'connected') {
+          connRef.current.send({
+              type: 'SYNC_STATE',
+              payload: payload
+          });
+      }
+  };
+
+  // --- PeerJS Logic ---
+  useEffect(() => {
+      const peer = new Peer();
+      peerRef.current = peer;
+
+      peer.on('open', (id) => {
+          setPeerId(id);
+      });
+
+      peer.on('connection', (conn) => {
+          connRef.current = conn;
+          setConnectionStatus('connected');
+          
+          // Send initial state to the connected peer
+          setTimeout(() => {
+            conn.send({
+               type: 'SYNC_STATE',
+               payload: { championships, broadcastState, currentMatchId }
+            });
+          }, 500);
+
+          conn.on('data', (data: any) => {
+               if (data.type === 'SYNC_STATE') {
+                  const payload = data.payload;
+                  if (payload.championships) setChampionships(payload.championships);
+                  if (payload.broadcastState) setBroadcastState(payload.broadcastState);
+                  if (payload.currentMatchId !== undefined) setCurrentMatchId(payload.currentMatchId);
+               }
+          });
+          conn.on('close', () => setConnectionStatus('disconnected'));
+      });
+
+      return () => {
+          peer.destroy();
+      };
+  }, []); // Run once on mount
+
+  const connectToPeer = () => {
+      if (!remotePeerId || !peerRef.current) return;
+      setConnectionStatus('connecting');
+      
+      const conn = peerRef.current.connect(remotePeerId);
+      connRef.current = conn;
+
+      conn.on('open', () => {
+          setConnectionStatus('connected');
+          // Request state or just wait for update
+      });
+
+      conn.on('data', (data: any) => {
+          if (data.type === 'SYNC_STATE') {
+              const payload = data.payload;
+              if (payload.championships) setChampionships(payload.championships);
+              if (payload.broadcastState) setBroadcastState(payload.broadcastState);
+              if (payload.currentMatchId !== undefined) setCurrentMatchId(payload.currentMatchId);
+          }
+      });
+      
+      conn.on('close', () => setConnectionStatus('disconnected'));
+      conn.on('error', () => setConnectionStatus('disconnected'));
   };
 
 
@@ -686,6 +766,7 @@ const App = () => {
         { id: 'live', icon: Tv, label: 'Transmisión', color: 'bg-red-600' },
         { id: 'users', icon: Users, label: 'Usuarios', color: 'bg-purple-600' },
         { id: 'stats', icon: BarChart2, label: 'Estadísticas', color: 'bg-orange-600' },
+        { id: 'cloud', icon: Cloud, label: 'Nube / Remoto', color: 'bg-sky-500' },
     ].filter(item => item.id !== 'users' || currentUser.role === UserRole.ADMIN);
 
     return (
@@ -719,7 +800,7 @@ const App = () => {
                     <div className={`p-3 md:p-4 rounded-full bg-slate-950 text-white group-hover:scale-110 transition-transform duration-300 ${item.color.replace('bg-', 'text-')}`}>
                         <item.icon size={24} className="md:w-8 md:h-8" />
                     </div>
-                    <span className="font-bold text-sm md:text-xl text-slate-200 group-hover:text-white uppercase tracking-wider">{item.label}</span>
+                    <span className="font-bold text-sm md:text-xl text-slate-200 group-hover:text-white uppercase tracking-wider text-center">{item.label}</span>
                 </button>
             ))}
         </div>
@@ -729,6 +810,66 @@ const App = () => {
         </button>
     </div>
   );
+  };
+
+  const renderCloud = () => {
+    return (
+        <PageContainer title="Conexión Remota / Nube" icon={Cloud} onBack={() => setActiveTab('home')}>
+             <div className="p-8 h-full flex flex-col items-center justify-center max-w-2xl mx-auto">
+                 <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 w-full shadow-2xl relative overflow-hidden">
+                     {connectionStatus === 'connected' && <div className="absolute top-0 left-0 w-full h-2 bg-green-500 shadow-[0_0_20px_#22c55e]"></div>}
+                     
+                     <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                        {connectionStatus === 'connected' ? <Wifi className="text-green-500"/> : <Cloud className="text-sky-500"/>}
+                        {connectionStatus === 'connected' ? 'Conectado a la Nube' : 'Configuración de Red'}
+                     </h3>
+                     <p className="text-slate-400 mb-8">Sincroniza el marcador y estadísticas con otros dispositivos vía internet.</p>
+
+                     <div className="space-y-8">
+                         {/* Host Section */}
+                         <div className="bg-slate-900/50 p-6 rounded-lg border border-slate-700">
+                             <label className="text-xs text-sky-400 uppercase font-bold tracking-widest mb-2 block">Tu ID de Conexión (Compartir)</label>
+                             <div className="flex gap-2">
+                                 <code className="flex-1 bg-black p-4 rounded font-mono text-xl text-white tracking-widest border border-slate-700 text-center select-all">
+                                     {peerId || 'Generando ID...'}
+                                 </code>
+                                 <button onClick={() => navigator.clipboard.writeText(peerId)} className="bg-slate-700 hover:bg-slate-600 px-4 rounded text-white transition">
+                                     <Copy size={20}/>
+                                 </button>
+                             </div>
+                             <p className="text-xs text-slate-500 mt-2">Comparte este código con los árbitros o controladores remotos.</p>
+                         </div>
+
+                         {/* Join Section */}
+                         <div className="bg-slate-900/50 p-6 rounded-lg border border-slate-700">
+                             <label className="text-xs text-green-400 uppercase font-bold tracking-widest mb-2 block">Conectar a Dispositivo Remoto</label>
+                             <div className="flex gap-2">
+                                 <input 
+                                    value={remotePeerId} 
+                                    onChange={(e) => setRemotePeerId(e.target.value)}
+                                    placeholder="Pegar ID aquí..."
+                                    className="flex-1 bg-slate-950 p-4 rounded font-mono text-lg text-white border border-slate-700 focus:border-green-500 outline-none transition"
+                                 />
+                                 <button 
+                                    onClick={connectToPeer} 
+                                    disabled={connectionStatus === 'connected' || connectionStatus === 'connecting'}
+                                    className={`px-6 rounded font-bold text-white transition flex items-center gap-2 ${connectionStatus === 'connected' ? 'bg-green-600 cursor-default' : 'bg-green-600 hover:bg-green-500'}`}
+                                 >
+                                     {connectionStatus === 'connecting' ? '...' : connectionStatus === 'connected' ? <Check/> : 'Conectar'}
+                                 </button>
+                             </div>
+                         </div>
+                     </div>
+                     
+                     {connectionStatus === 'connected' && (
+                         <div className="mt-8 text-center text-green-400 bg-green-900/20 p-4 rounded border border-green-900 animate-pulse">
+                             Sistema Sincronizado en Tiempo Real
+                         </div>
+                     )}
+                 </div>
+             </div>
+        </PageContainer>
+    );
   };
 
   const renderTeams = () => {
@@ -1638,8 +1779,8 @@ const App = () => {
              
              <div className="flex items-center gap-4">
                  <div className="hidden md:flex items-center gap-2 text-xs text-slate-500 bg-slate-900 px-3 py-1 rounded-full border border-slate-800">
-                     <Wifi size={12} className="text-green-500" />
-                     Sincronización Local Activa
+                     <Wifi size={12} className={connectionStatus === 'connected' ? "text-green-500" : "text-slate-500"} />
+                     <span className="hidden md:inline">{connectionStatus === 'connected' ? 'Nube Activa' : 'Local'}</span>
                  </div>
                  <div className="flex items-center gap-2">
                     <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
@@ -1661,6 +1802,7 @@ const App = () => {
         <div ref={broadcastContainerRef} className="flex-1 bg-black relative justify-center overflow-hidden flex items-center w-full">
             {isBroadcaster ? (
                  <>
+                    {/* VIDEO CONTAINER: Fill the parent completely, object-cover handles aspect ratio */}
                     <video ref={videoRef} autoPlay playsInline muted className="absolute w-full h-full object-cover z-0" />
                     {cameraError && (
                         <div className="absolute inset-0 z-0 flex items-center justify-center bg-slate-900/90 text-center p-8">
@@ -1681,8 +1823,8 @@ const App = () => {
                 <img src="https://images.unsplash.com/photo-1592656094267-764a45160876?q=80&w=2000" className="opacity-40 absolute w-full h-full object-cover" />
             )}
             
-            {/* Aspect Ratio Container for Video */}
-            <div className={`aspect-video w-full max-h-full relative shadow-2xl bg-black/10 z-10 pointer-events-none ${isFullscreen ? 'h-full w-full max-h-screen' : ''}`}>
+            {/* OVERLAY CONTAINER: Fits the VIDEO exactly */}
+            <div className={`w-full h-full relative z-10 pointer-events-none ${isFullscreen ? 'h-full w-full' : ''}`}>
                 <div className="pointer-events-auto w-full h-full">
                 <BroadcastOverlay 
                     match={activeMatch} 
@@ -1712,6 +1854,7 @@ const App = () => {
             {activeTab === 'control' && renderControlPanel()}
             {activeTab === 'users' && renderUsers()}
             {activeTab === 'stats' && renderStats()}
+            {activeTab === 'cloud' && renderCloud()}
         </main>
     </div>
   );

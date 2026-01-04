@@ -9,7 +9,7 @@ import {
   Video, Mic, ShieldAlert, X, Shirt, BarChart2,
   Plus, Edit, Trash2, Save, UserPlus, Upload, ArrowLeft, Image as ImageIcon,
   Shuffle, List, Timer, Lock, User as UserIcon, StopCircle,
-  ChevronDown, ChevronUp, Radio, Home, Camera, Gamepad2, Globe, Wifi, Maximize, Minimize
+  ChevronDown, ChevronUp, Radio, Home, Camera, Gamepad2, Globe, Wifi, Maximize, Minimize, RefreshCcw, Hand, Zap, Medal, Star, Target
 } from 'lucide-react';
 
 // --- Components ---
@@ -189,6 +189,7 @@ const App = () => {
   const [aiCommentary, setAiCommentary] = useState<string>("");
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   
   // Video Stream Ref
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -290,35 +291,21 @@ const App = () => {
             };
 
             // Attempt sequence to find working hardware
-            // Priority: Environment (Back) camera, Landscape Aspect Ratio
-            const idealConstraints = { 
+            // Priority: User selection (facingMode)
+            const constraints = { 
                 video: { 
-                    facingMode: 'environment',
-                    width: { ideal: 1280 }, 
-                    height: { ideal: 720 }
+                    facingMode: facingMode
                 }, 
                 audio: true 
             };
 
-            // 1. Ideal Landscape Camera
-            let stream = await getMedia(idealConstraints);
+            // 1. Try with preferred constraints
+            let stream = await getMedia(constraints);
             
-            // 2. Fallback: Any Video + Audio (e.g. Webcam)
+            // 2. Fallback: Any Video + Audio (if specific facingMode fails)
             if (!stream) {
-                console.log("Environment camera failed, falling back to any video input + audio.");
+                console.log("Preferred camera failed, falling back to any video input + audio.");
                 stream = await getMedia({ video: true, audio: true });
-            }
-
-            // 3. Fallback: Environment Camera only (no audio)
-            if (!stream) {
-                console.log("Audio input failed, falling back to video only (environment).");
-                stream = await getMedia({ video: { facingMode: 'environment' }, audio: false });
-            }
-
-            // 4. Fallback: Any Video only
-            if (!stream) {
-                console.log("Environment video failed, falling back to any video input.");
-                stream = await getMedia({ video: true, audio: false });
             }
 
             if (stream) {
@@ -332,8 +319,7 @@ const App = () => {
                     }
                 }
             } else {
-                setCameraError("No se pudo acceder a la cámara. Verifique permisos y hardware.");
-                console.error("Unable to access camera. Please ensure permissions are granted and hardware is available.");
+                setCameraError("No se pudo acceder a la cámara. Intente cambiar (Frontal/Trasera) o revise permisos.");
             }
         }
     };
@@ -345,7 +331,7 @@ const App = () => {
             currentStream.getTracks().forEach(track => track.stop());
         }
     };
-  }, [activeTab, currentUser]);
+  }, [activeTab, currentUser, facingMode]); // Added facingMode to dependency
 
   const handleCreateChampionship = async (name: string, logoFile: File | null) => {
     let logoUrl = "https://picsum.photos/id/1015/200/200";
@@ -601,7 +587,7 @@ const App = () => {
     });
   };
 
-  const handleScoreUpdate = async (matchId: string, teamId: string, points: number, action: ActionType, playerId?: string) => {
+  const handleScoreUpdate = async (matchId: string, teamId: string, points: number, action: ActionType, playerId?: string | null) => {
     const champs = [...championships];
     let match: Match | undefined;
     champs.forEach(c => {
@@ -622,7 +608,7 @@ const App = () => {
       id: Date.now().toString(),
       type: action,
       teamId,
-      playerId,
+      playerId: playerId || undefined,
       scoreSnapshot: { ...setScore },
       timestamp: Date.now(),
       description: `${action} de ${isHome ? 'Casa' : 'Visita'}`
@@ -630,13 +616,22 @@ const App = () => {
     match.events.push(event);
 
     if (playerId) {
-        const team = teams.find(t => t.id === teamId);
-        const player = team?.players.find(p => p.id === playerId);
-        if (player) {
-            player.stats.points += points;
-            if(action === ActionType.SERVE_ACE) player.stats.aces++;
-            if(action === ActionType.BLOCK) player.stats.blocks++;
-            if(action === ActionType.ATTACK) player.stats.attacks++;
+        // Find team across all teams to ensure we update the master record
+        const teamIndex = teams.findIndex(t => t.id === teamId);
+        if (teamIndex !== -1) {
+             const updatedTeams = [...teams];
+             const player = updatedTeams[teamIndex].players.find(p => p.id === playerId);
+             
+             if (player) {
+                // Update stats based on action
+                if(points > 0) player.stats.points += points;
+                if(action === ActionType.SERVE_ACE) player.stats.aces++;
+                if(action === ActionType.BLOCK) player.stats.blocks++;
+                if(action === ActionType.ATTACK) player.stats.attacks++;
+                
+                // Save global teams state to persist stats
+                setTeams(updatedTeams);
+             }
         }
     }
     
@@ -1123,11 +1118,62 @@ const App = () => {
     </PageContainer>
   );
 
-  const renderStats = () => (
-     <PageContainer title="Estadísticas Globales" icon={BarChart2} onBack={() => setActiveTab('home')}>
+  const renderStats = () => {
+    // Calculate Dream Team (Simple logic: Best in each category)
+    const allPlayers = teams.flatMap(t => t.players.map(p => ({...p, teamLogo: t.logo, teamName: t.shortName})));
+    
+    const sortedByPoints = [...allPlayers].sort((a,b) => b.stats.points - a.stats.points);
+    const sortedByBlocks = [...allPlayers].filter(p => p.position === 'Central').sort((a,b) => b.stats.blocks - a.stats.blocks);
+    const sortedByAttacks = [...allPlayers].filter(p => p.position === 'Punta' || p.position === 'Opuesto').sort((a,b) => b.stats.attacks - a.stats.attacks);
+    const sortedByAces = [...allPlayers].sort((a,b) => b.stats.aces - a.stats.aces);
+    
+    const mvp = sortedByPoints[0];
+    const bestBlocker = sortedByBlocks[0];
+    const bestSpiker = sortedByAttacks[0];
+    const bestServer = sortedByAces[0];
+
+    return (
+     <PageContainer title="Estadísticas & Dream Team" icon={BarChart2} onBack={() => setActiveTab('home')}>
      <div className="p-4 md:p-8 overflow-y-auto h-full pb-20">
+        
+        {/* Dream Team Section */}
+        <div className="mb-8">
+            <h3 className="text-2xl font-sports mb-6 text-yellow-500 flex items-center gap-2"><Star className="fill-yellow-500"/> Mejores del Torneo</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                    { title: "MVP (Max Puntos)", player: mvp, icon: Medal, color: 'text-yellow-400', border: 'border-yellow-500' },
+                    { title: "Mejor Bloqueo", player: bestBlocker, icon: Hand, color: 'text-blue-400', border: 'border-blue-500' },
+                    { title: "Mejor Ataque", player: bestSpiker, icon: Zap, color: 'text-red-400', border: 'border-red-500' },
+                    { title: "Mejor Saque", player: bestServer, icon: Target, color: 'text-green-400', border: 'border-green-500' },
+                ].map((item, idx) => (
+                    <div key={idx} className={`bg-slate-800/80 rounded-xl p-6 border-b-4 ${item.border} relative overflow-hidden group shadow-xl`}>
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
+                            <item.icon size={64} />
+                        </div>
+                        <h4 className={`text-sm font-bold uppercase tracking-widest mb-4 ${item.color}`}>{item.title}</h4>
+                        {item.player ? (
+                            <div className="flex items-center gap-4 relative z-10">
+                                <img src={item.player.image} className="w-16 h-16 rounded-full border-2 border-white object-cover bg-slate-700"/>
+                                <div>
+                                    <div className="font-bold text-lg text-white leading-tight">{item.player.name}</div>
+                                    <div className="text-xs text-slate-400 mb-1">{item.player.teamName}</div>
+                                    <div className="font-mono text-xl font-bold text-white bg-slate-900/50 inline-block px-2 rounded">
+                                        {item.title.includes('Puntos') ? item.player.stats.points : 
+                                         item.title.includes('Bloqueo') ? item.player.stats.blocks :
+                                         item.title.includes('Ataque') ? item.player.stats.attacks : item.player.stats.aces}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-slate-500 italic text-sm">Sin datos suficientes</div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </div>
+
         <div className="bg-slate-800/50 p-4 md:p-6 rounded-lg border border-slate-700 shadow-lg mb-6 backdrop-blur-sm">
-            <h3 className="text-xl font-sports mb-4 text-yellow-500">Tabla de Posiciones</h3>
+            <h3 className="text-xl font-sports mb-4 text-white">Tabla de Posiciones</h3>
             <div className="overflow-x-auto">
             <table className="w-full text-sm">
                 <thead>
@@ -1174,7 +1220,7 @@ const App = () => {
         </div>
     </div>
     </PageContainer>
-  );
+  )};
 
   const renderControlPanel = () => {
     let activeMatch: Match | undefined;
@@ -1183,6 +1229,9 @@ const App = () => {
     if (!activeMatch) return <div className="text-center p-8">Seleccione un partido desde el Fixture.</div>;
     const homeTeam = teams.find(t => t.id === activeMatch!.homeTeamId)!;
     const awayTeam = teams.find(t => t.id === activeMatch!.awayTeamId)!;
+
+    const activePlayerId = broadcastState.activePlayerIdForStats;
+    const activePlayer = [...homeTeam.players, ...awayTeam.players].find(p => p.id === activePlayerId);
 
     return (
         <PageContainer title="Panel de Control" icon={Gamepad2} onBack={() => setActiveTab('fixture')}>
@@ -1194,18 +1243,39 @@ const App = () => {
                              <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">Marcador</div>
                              <div className="text-xs font-bold text-white bg-black px-2 py-0.5 rounded border border-slate-600">Set {activeMatch.currentSet + 1}</div>
                         </div>
+                        
+                        {/* Player Selection Warning */}
+                        {!activePlayerId && (
+                            <div className="bg-yellow-900/30 border border-yellow-700 text-yellow-500 text-xs p-2 rounded mb-2 text-center animate-pulse">
+                                Seleccione un jugador a la derecha para asignar puntos
+                            </div>
+                        )}
+
                         <div className="flex gap-2">
                              <div className="flex-1 bg-blue-900/30 p-2 rounded border border-blue-900/50 text-center">
                                  <div className="font-bold text-blue-300 mb-1">{homeTeam.shortName}</div>
                                  <div className="text-4xl font-bold text-white mb-2">{activeMatch.sets[activeMatch.currentSet].home}</div>
-                                 <button onClick={() => handleScoreUpdate(activeMatch!.id, homeTeam.id, 1, ActionType.ATTACK)} className="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded font-bold text-lg shadow-lg mb-2">+1</button>
-                                 <button onClick={() => handleScoreUpdate(activeMatch!.id, homeTeam.id, -1, ActionType.ATTACK_ERROR)} className="w-full bg-slate-700 hover:bg-slate-600 py-1 rounded text-xs">-1 (Corregir)</button>
+                                 
+                                 <div className="grid grid-cols-2 gap-1 mb-2">
+                                    <button onClick={() => handleScoreUpdate(activeMatch!.id, homeTeam.id, 1, ActionType.ATTACK, activePlayerId)} className="bg-blue-600 hover:bg-blue-500 py-2 rounded text-xs font-bold shadow">+1 Ataque</button>
+                                    <button onClick={() => handleScoreUpdate(activeMatch!.id, homeTeam.id, 1, ActionType.BLOCK, activePlayerId)} className="bg-indigo-600 hover:bg-indigo-500 py-2 rounded text-xs font-bold shadow">+1 Bloqueo</button>
+                                    <button onClick={() => handleScoreUpdate(activeMatch!.id, homeTeam.id, 1, ActionType.SERVE_ACE, activePlayerId)} className="bg-green-600 hover:bg-green-500 py-2 rounded text-xs font-bold shadow col-span-2">+1 Ace</button>
+                                 </div>
+                                 
+                                 <button onClick={() => handleScoreUpdate(activeMatch!.id, homeTeam.id, -1, ActionType.ATTACK_ERROR, activePlayerId)} className="w-full bg-slate-700 hover:bg-slate-600 py-1 rounded text-[10px]">-1 (Corregir)</button>
                              </div>
+                             
                              <div className="flex-1 bg-red-900/30 p-2 rounded border border-red-900/50 text-center">
                                  <div className="font-bold text-red-300 mb-1">{awayTeam.shortName}</div>
                                  <div className="text-4xl font-bold text-white mb-2">{activeMatch.sets[activeMatch.currentSet].away}</div>
-                                 <button onClick={() => handleScoreUpdate(activeMatch!.id, awayTeam.id, 1, ActionType.ATTACK)} className="w-full bg-red-600 hover:bg-red-500 py-3 rounded font-bold text-lg shadow-lg mb-2">+1</button>
-                                 <button onClick={() => handleScoreUpdate(activeMatch!.id, awayTeam.id, -1, ActionType.ATTACK_ERROR)} className="w-full bg-slate-700 hover:bg-slate-600 py-1 rounded text-xs">-1 (Corregir)</button>
+                                 
+                                 <div className="grid grid-cols-2 gap-1 mb-2">
+                                    <button onClick={() => handleScoreUpdate(activeMatch!.id, awayTeam.id, 1, ActionType.ATTACK, activePlayerId)} className="bg-red-600 hover:bg-red-500 py-2 rounded text-xs font-bold shadow">+1 Ataque</button>
+                                    <button onClick={() => handleScoreUpdate(activeMatch!.id, awayTeam.id, 1, ActionType.BLOCK, activePlayerId)} className="bg-indigo-600 hover:bg-indigo-500 py-2 rounded text-xs font-bold shadow">+1 Bloqueo</button>
+                                    <button onClick={() => handleScoreUpdate(activeMatch!.id, awayTeam.id, 1, ActionType.SERVE_ACE, activePlayerId)} className="bg-green-600 hover:bg-green-500 py-2 rounded text-xs font-bold shadow col-span-2">+1 Ace</button>
+                                 </div>
+
+                                 <button onClick={() => handleScoreUpdate(activeMatch!.id, awayTeam.id, -1, ActionType.ATTACK_ERROR, activePlayerId)} className="w-full bg-slate-700 hover:bg-slate-600 py-1 rounded text-[10px]">-1 (Corregir)</button>
                              </div>
                         </div>
                     </div>
@@ -1260,7 +1330,9 @@ const App = () => {
 
                 {/* 3. Player Stats & Serve Selector */}
                 <div className="w-full md:w-1/4 p-4 border-l border-slate-800 overflow-y-auto bg-slate-800/30">
-                    <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 text-center">Jugador Activo (Saque/Stats)</div>
+                    <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 text-center">
+                        {activePlayer ? `Asignar a: ${activePlayer.name}` : 'Seleccionar Jugador para Puntos'}
+                    </div>
                     <div className="grid grid-cols-2 gap-3 h-full">
                         <div className="bg-slate-800 rounded-lg p-2 border border-slate-700">
                             <div className="text-[10px] text-blue-400 text-center mb-2 font-bold uppercase border-b border-slate-700 pb-1">{homeTeam.shortName}</div>
@@ -1272,11 +1344,11 @@ const App = () => {
                                         const isSamePlayer = prev.activePlayerIdForStats === p.id;
                                         return {
                                             ...prev, 
-                                            activePlayerIdForStats: p.id,
+                                            activePlayerIdForStats: isSamePlayer ? null : p.id,
                                             showServingInfo: isSamePlayer ? !prev.showServingInfo : true
                                         };
                                     })} 
-                                    className={`aspect-square rounded flex flex-col items-center justify-center transition border ${broadcastState.activePlayerIdForStats === p.id && broadcastState.showServingInfo ? 'bg-blue-600 border-white text-white' : 'bg-slate-700 border-transparent text-slate-400 hover:bg-slate-600'}`}
+                                    className={`aspect-square rounded flex flex-col items-center justify-center transition border ${broadcastState.activePlayerIdForStats === p.id ? 'bg-blue-600 border-white text-white' : 'bg-slate-700 border-transparent text-slate-400 hover:bg-slate-600'}`}
                                     >
                                         <span className="text-xs font-bold">{p.number}</span>
                                     </button>
@@ -1293,11 +1365,11 @@ const App = () => {
                                         const isSamePlayer = prev.activePlayerIdForStats === p.id;
                                         return {
                                             ...prev, 
-                                            activePlayerIdForStats: p.id,
+                                            activePlayerIdForStats: isSamePlayer ? null : p.id,
                                             showServingInfo: isSamePlayer ? !prev.showServingInfo : true
                                         };
                                     })} 
-                                    className={`aspect-square rounded flex flex-col items-center justify-center transition border ${broadcastState.activePlayerIdForStats === p.id && broadcastState.showServingInfo ? 'bg-red-600 border-white text-white' : 'bg-slate-700 border-transparent text-slate-400 hover:bg-slate-600'}`}
+                                    className={`aspect-square rounded flex flex-col items-center justify-center transition border ${broadcastState.activePlayerIdForStats === p.id ? 'bg-red-600 border-white text-white' : 'bg-slate-700 border-transparent text-slate-400 hover:bg-slate-600'}`}
                                     >
                                         <span className="text-xs font-bold">{p.number}</span>
                                     </button>
@@ -1422,9 +1494,14 @@ const App = () => {
                     <span className="text-xs font-bold text-red-600 tracking-widest uppercase">EN VIVO</span>
                  </div>
                  {isBroadcaster && (
-                     <button onClick={toggleFullscreen} className="bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-full border border-slate-600 transition">
-                         {isFullscreen ? <Minimize size={16}/> : <Maximize size={16}/>}
-                     </button>
+                    <div className="flex gap-2">
+                         <button onClick={() => setFacingMode(prev => prev === 'user' ? 'environment' : 'user')} className="bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-full border border-slate-600 transition" title="Cambiar Cámara">
+                             <RefreshCcw size={16}/>
+                         </button>
+                         <button onClick={toggleFullscreen} className="bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-full border border-slate-600 transition" title="Pantalla Completa">
+                             {isFullscreen ? <Minimize size={16}/> : <Maximize size={16}/>}
+                         </button>
+                    </div>
                  )}
              </div>
         </header>

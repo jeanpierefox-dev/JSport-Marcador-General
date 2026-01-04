@@ -198,36 +198,51 @@ const App = () => {
     
     const startCamera = async () => {
         if (activeTab === 'live' && currentUser?.role === UserRole.ADMIN) {
-            try {
-                // Attempt 1: Back Camera (Environment)
+            
+            const getMedia = async (constraints: MediaStreamConstraints): Promise<MediaStream | null> => {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: 'environment' }, 
-                        audio: true
-                    });
-                    currentStream = stream;
+                    return await navigator.mediaDevices.getUserMedia(constraints);
                 } catch (err) {
-                    console.log("Environment camera failed or unavailable, falling back to default video input.");
-                    // Attempt 2: Default/User Camera (Fallback)
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                        video: true, 
-                        audio: true
-                    });
-                    currentStream = stream;
+                    console.warn(`Failed to get media with constraints: ${JSON.stringify(constraints)}`, err);
+                    return null;
                 }
-                
-                if (videoRef.current && currentStream) {
-                    videoRef.current.srcObject = currentStream;
-                    // Play is sometimes required on mobile devices if autoplay policies interfere
+            };
+
+            // Attempt sequence to find working hardware
+            // 1. Environment Camera + Audio
+            let stream = await getMedia({ video: { facingMode: 'environment' }, audio: true });
+            
+            // 2. Fallback: Any Video + Audio (e.g. Webcam)
+            if (!stream) {
+                console.log("Environment camera failed, falling back to any video input + audio.");
+                stream = await getMedia({ video: true, audio: true });
+            }
+
+            // 3. Fallback: Environment Camera only (no audio)
+            if (!stream) {
+                console.log("Audio input failed, falling back to video only (environment).");
+                stream = await getMedia({ video: { facingMode: 'environment' }, audio: false });
+            }
+
+            // 4. Fallback: Any Video only
+            if (!stream) {
+                console.log("Environment video failed, falling back to any video input.");
+                stream = await getMedia({ video: true, audio: false });
+            }
+
+            if (stream) {
+                currentStream = stream;
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream;
                     try {
                         await videoRef.current.play();
                     } catch(e) {
                         console.warn("Video auto-play failed", e);
                     }
                 }
-            } catch (err) {
-                console.error("Error accessing camera/microphone:", err);
-                // We do not alert here to avoid spamming the user if permissions are denied permanently
+            } else {
+                console.error("Unable to access camera. Please ensure permissions are granted and hardware is available.");
+                // User will see black screen but app won't crash
             }
         }
     };

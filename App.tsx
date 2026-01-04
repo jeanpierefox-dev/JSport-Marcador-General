@@ -113,24 +113,24 @@ const PageContainer = ({ title, icon: Icon, onBack, children }: any) => (
     <div className="flex flex-col h-full w-full bg-slate-900">
         {/* Header - Fixed Height, Flex-none (Never shrinks or scrolls) */}
         <header className="flex-none bg-slate-950 border-b border-slate-800 h-16 md:h-18 px-4 flex items-center justify-between z-50 shadow-md backdrop-blur-md relative">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 min-w-0">
                 <button 
                     onClick={onBack} 
-                    className="w-12 h-12 md:w-10 md:h-10 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition flex items-center justify-center border border-slate-800 hover:border-slate-600 active:scale-95 touch-manipulation"
-                    title="Volver al Menú"
+                    className="flex-none w-12 h-12 md:w-10 md:h-10 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition flex items-center justify-center border border-slate-800 hover:border-slate-600 active:scale-95 touch-manipulation"
+                    title="Volver"
                     aria-label="Volver"
                 >
                     <ArrowLeft size={24} />
                 </button>
-                <div className="h-8 w-[1px] bg-slate-800 mx-2 hidden md:block"></div>
-                <h2 className="text-lg md:text-2xl font-bold text-white flex items-center gap-3 uppercase tracking-wide truncate max-w-[200px] md:max-w-none">
+                <div className="h-8 w-[1px] bg-slate-800 mx-2 hidden md:block flex-none"></div>
+                <h2 className="text-lg md:text-2xl font-bold text-white flex items-center gap-3 uppercase tracking-wide truncate">
                     {Icon && <Icon className="text-yellow-500 shrink-0" size={24} />}
                     <span className="truncate">{title}</span>
                 </h2>
             </div>
             
             {/* Small Header Logo */}
-            <div className="flex items-center gap-2 opacity-90 shrink-0">
+            <div className="flex items-center gap-2 opacity-90 shrink-0 ml-2">
                 <div className="bg-blue-600 p-1.5 rounded skew-x-[-10deg] shadow shadow-blue-500/20">
                     <Trophy size={14} className="text-white" strokeWidth={3}/>
                 </div>
@@ -730,14 +730,24 @@ const App = () => {
   };
 
   const renderTeams = () => {
+    // Determine title based on state
+    const selectedTeam = teams.find(t => t.id === selectedTeamId);
+    const title = selectedTeamId && selectedTeam ? selectedTeam.name : "Equipos";
+
+    // Smart Back Handler logic
+    const handleBack = () => {
+        if (selectedTeamId) {
+            setSelectedTeamId(null);
+            setEditingPlayer(null);
+            setIsEditingTeam(false);
+        } else {
+            setActiveTab('home');
+        }
+    };
+
     const content = selectedTeamId ? (
         <div className="p-4 md:p-8 overflow-y-auto h-full pb-20">
-           <button 
-                onClick={() => { setSelectedTeamId(null); setEditingPlayer(null); setIsEditingTeam(false); }} 
-                className="mb-6 flex items-center gap-3 text-slate-200 hover:text-white transition bg-slate-800 px-4 py-2 rounded-full border border-slate-700 active:scale-95 touch-manipulation w-fit"
-           >
-              <ArrowLeft size={20} /> <span className="font-bold">Volver a Lista</span>
-           </button>
+           {/* No local back button here anymore, handled by header */}
            
            <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-8 mb-8 bg-slate-800/50 p-4 md:p-8 rounded-xl border border-slate-700 shadow-xl relative backdrop-blur-sm">
                {currentUser.role === UserRole.ADMIN && !isEditingTeam && (
@@ -929,7 +939,7 @@ const App = () => {
     );
 
     return (
-        <PageContainer title="Equipos" icon={Shirt} onBack={() => setActiveTab('home')}>
+        <PageContainer title={title} icon={Shirt} onBack={handleBack}>
             {content}
         </PageContainer>
     );

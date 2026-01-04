@@ -14,10 +14,20 @@
       ::-webkit-scrollbar-track { background: #0f172a; }
       ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     </style>
+    <script>
+      // Polyfill necessary for libraries utilizing process.env in the browser
+      window.process = {
+        env: {
+          NODE_ENV: 'development',
+          API_KEY: '' // Placeholder to prevent crash, populated by environment if available
+        }
+      };
+    </script>
   <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
     "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
@@ -29,5 +39,6 @@
 </head>
   <body class="bg-slate-900 text-white h-screen overflow-hidden">
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

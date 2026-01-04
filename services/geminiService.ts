@@ -9,11 +9,15 @@ export const generateAICommentary = async (
   lastEvent: MatchEvent | undefined
 ): Promise<string> => {
   
-  if (!process.env.API_KEY) {
-    return "Comentario de IA no disponible (Falta API Key)";
+  // Safe access to process.env to prevent runtime crashes in browser
+  const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : '';
+
+  if (!apiKey) {
+    console.warn("API Key missing for AI Commentary");
+    return "Comentario de IA no disponible (Configurar API Key)";
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: apiKey });
 
   const scoreStr = match.sets.map((s, i) => `Set ${i+1}: ${s.home}-${s.away}`).join(', ');
   const eventDesc = lastEvent ? `Última acción: ${lastEvent.description} por el equipo ${lastEvent.teamId === homeTeam.id ? homeTeam.name : awayTeam.name}` : "El partido está por comenzar.";
